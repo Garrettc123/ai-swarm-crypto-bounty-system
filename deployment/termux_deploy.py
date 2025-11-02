@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
 Termux Deployment System - Automated deployment for Android/Termux environments
-Copyright (c) 2025 Garrett Christensen. All rights reserved.
+Copyright (c) 2025 Garrett Carroll. All rights reserved.
 """
 
 import os
 import subprocess
 import sys
 import json
-from pathing import Path
+from pathlib import Path
 from typing import Dict, List, Any
 
 class TermuxDeployer:

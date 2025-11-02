@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 AI Swarm Coordinator - Central orchestration system for multi-agent crypto bounty hunting
-Copyright (c) 2025 Garrett Christensen. All rights reserved.
+Copyright (c) 2025 Garrett Carroll. All rights reserved.
 """
 
 import asyncio

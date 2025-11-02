@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Crypto Bounty Hunter - Autonomous cryptocurrency bounty detection and collection system
-Copyright (c) 2025 Garrett Christensen. All rights reserved.
+Copyright (c) 2025 Garrett Carroll. All rights reserved.
 """
 
 import asyncio

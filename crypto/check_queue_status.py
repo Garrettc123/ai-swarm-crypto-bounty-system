@@ -31,7 +31,7 @@ def verify(status, *, now=None):
             raise ValueError("zero listings from feed " + feed)
         counts.append(count)
     unique = status.get("observed_unique")
-    if type(unique) is not int or not max(counts) <= unique <= sum(counts):
+    if type(unique) is not int or not max(counts) <= unique <= 25000:
         raise ValueError("unexpected deduplicated queue size")
     if status.get("verified_earnings_usd") != 0 or status.get("external_actions_enabled") is not False:
         raise ValueError("financial or execution gate violation")

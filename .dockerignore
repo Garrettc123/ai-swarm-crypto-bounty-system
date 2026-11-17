@@ -3,6 +3,7 @@
 !bounty_intelligence.py
 !bounty_work_queue.py
 !blockscout_evidence.py
+!immunefi_review.py
 !Dockerfile
 !dashboard.html
 !dashboard.css

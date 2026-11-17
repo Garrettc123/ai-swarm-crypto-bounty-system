@@ -1,0 +1,81 @@
+"""Loopback-only HTTP contract tests for the bounded staging dashboard."""
+from __future__ import annotations
+
+import json
+import threading
+import unittest
+from http.server import ThreadingHTTPServer
+from pathlib import Path
+from urllib.error import HTTPError
+from urllib.request import urlopen
+
+import bounty_discovery_service as svc
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+class TestReadOnlyDashboard(unittest.TestCase):
+    def setUp(self):
+        self.previous = svc.INDEX
+        item = {
+            "url": "https://github.com/sample/repo/issues/12",
+            "title": "Python crypto bounty task",
+            "labels": ["bounty", "help wanted"],
+            "updated_at": "2026-11-17T13:00:00Z",
+        }
+        svc.INDEX = svc.BountyIndex(search=lambda _query: [item])
+        svc.INDEX.scan_once()
+        self.server = ThreadingHTTPServer(("127.0.0.1", 0), svc.Handler)
+        self.thread = threading.Thread(target=self.server.serve_forever,
+                                       daemon=True)
+        self.thread.start()
+        self.root = "http://127.0.0.1:" + str(self.server.server_address[1])
+
+    def tearDown(self):
+        self.server.shutdown()
+        self.thread.join(timeout=3)
+        self.server.server_close()
+        svc.INDEX = self.previous
+
+    def test_homepage_serves_protected_assets(self):
+        with urlopen(self.root + "/", timeout=3) as response:
+            html = response.read().decode("utf-8")
+            policy = response.headers.get("Content-Security-Policy")
+            self.assertEqual(response.status, 200)
+            self.assertIn("Bounty Intelligence", html)
+            self.assertIn("script-src 'self'", policy)
+            self.assertIn("frame-ancestors 'none'", policy)
+            self.assertEqual(response.headers.get("X-Content-Type-Options"),
+                             "nosniff")
+        for path, expected in (("/dashboard.css", "text/css"),
+                               ("/dashboard.js", "text/javascript")):
+            with urlopen(self.root + path, timeout=3) as response:
+                self.assertEqual(response.status, 200)
+                self.assertIn(expected, response.headers["Content-Type"])
+                self.assertGreater(len(response.read()), 100)
+
+    def test_read_only_json_contracts(self):
+        for path in ("/health", "/ready", "/bounties?limit=1&skill=python",
+                     "/sources", "/receipts", "/digest"):
+            with urlopen(self.root + path, timeout=3) as response:
+                self.assertEqual(response.status, 200, path)
+                self.assertIsInstance(json.load(response), dict)
+        with urlopen(self.root + "/bounties?limit=1", timeout=3) as response:
+            value = json.load(response)
+            self.assertEqual(value["returned"], 1)
+            self.assertFalse(value["items"][0]["authorization_to_test"])
+
+    def test_invalid_query_does_not_execute_search(self):
+        with self.assertRaises(HTTPError) as error:
+            urlopen(self.root + "/bounties?limit=invalid", timeout=3)
+        self.assertEqual(error.exception.code, 400)
+
+    def test_frontend_uses_text_content_not_html_sink(self):
+        script = (ROOT / "dashboard.js").read_text(encoding="utf-8")
+        self.assertIn(".textContent", script)
+        self.assertNotIn("innerHTML", script)
+        self.assertNotIn("eval(", script)
+
+
+if __name__ == "__main__":
+    unittest.main()

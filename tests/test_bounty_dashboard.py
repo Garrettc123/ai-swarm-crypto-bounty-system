@@ -65,6 +65,31 @@ class TestReadOnlyDashboard(unittest.TestCase):
             self.assertEqual(value["returned"], 1)
             self.assertFalse(value["items"][0]["authorization_to_test"])
 
+    def test_rhns_governance_route_is_read_only_and_research_only(self):
+        with urlopen(self.root + "/governance", timeout=3) as response:
+            self.assertEqual(response.status, 200)
+            value = json.load(response)
+        self.assertEqual(value["governance_version"], "rhns-governance-0.1")
+        self.assertFalse(value["external_execution_enabled"])
+        self.assertFalse(value["wallet_actions_enabled"])
+        self.assertTrue(value["review_queue_admissible"])
+        with urlopen(self.root + "/work-queue?limit=2", timeout=3) as response:
+            self.assertEqual(response.status, 200)
+            work_queue = json.load(response)
+        self.assertTrue(work_queue["formal_governance"]["passed"])
+        self.assertFalse(work_queue["formal_governance"]["external_dispatch_enabled"])
+        with urlopen(self.root + "/", timeout=3) as response:
+            html = response.read().decode("utf-8")
+        self.assertIn('id="governance-status"', html)
+
+    def test_governance_queue_fails_closed_during_outage(self):
+        from urllib.error import URLError
+        svc.INDEX = svc.BountyIndex(search=lambda _q: (_ for _ in ()).throw(URLError("offline")))
+        svc.INDEX.scan_once()
+        with self.assertRaises(HTTPError) as failure:
+            urlopen(self.root + "/work-queue", timeout=3)
+        self.assertEqual(failure.exception.code, 503)
+
     def test_immunefi_policy_is_reachable_and_never_enables_automation(self):
         with urlopen(self.root + "/immunefi-policy", timeout=3) as response:
             self.assertEqual(response.status, 200)

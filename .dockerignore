@@ -4,7 +4,13 @@
 !bounty_work_queue.py
 !blockscout_evidence.py
 !immunefi_review.py
+!rhns_governance.py
 !Dockerfile
 !dashboard.html
 !dashboard.css
 !dashboard.js
+
+!bounty_queue_persistence.py
+!bounty_queue_oidc.py
+!queue_admin.py
+!bounty_preflight.py

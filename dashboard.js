@@ -125,6 +125,32 @@ async function loadWorkQueue() {
   }
 }
 
+async function loadGovernance() {
+  const status = element("governance-status");
+  const details = element("governance-details");
+  try {
+    const response = await fetch("/governance", {cache: "no-store"});
+    if (!response.ok) throw Error("Governance endpoint unavailable");
+    const state = await response.json();
+    if (state.external_execution_enabled !== false ||
+        state.wallet_actions_enabled !== false ||
+        state.security_target_testing_enabled !== false ||
+        state.automatic_submissions_enabled !== false) {
+      throw Error("Unexpected active external capabilities");
+    }
+    status.textContent = state.review_queue_admissible === true
+      ? "READ-ONLY RESEARCH ALLOWED" : "GOVERNANCE HOLD";
+    details.textContent = "Kernel " + String(state.governance_version || "unknown") +
+      " · scan " + String(state.scan_state || "unknown") +
+      " · source ready " + String(state.source_ready) +
+      " · volatile receipts valid " + String(state.volatile_receipts_valid) +
+      ". External execution, trading and bounty submission remain disabled. " +
+      "Resource ledgers are currently process-local, not a production ledger.";
+  } catch (_) {
+    status.textContent = "GOVERNANCE UNAVAILABLE";
+    details.textContent = "Unable to verify policy. Do not dispatch or submit work.";
+  }
+}
 async function loadImmunefi() {
   const target = element("immunefi-status");
   try {
@@ -173,6 +199,7 @@ async function load() {
       String(delta.no_longer_listed ?? 0) + " no longer listed. " +
       "Disappearance does not mean the task was completed or paid.";
     render();
+    await loadGovernance();
     await loadWorkQueue();
     await loadImmunefi();
   } catch (_) {

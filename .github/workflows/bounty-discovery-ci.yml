@@ -4,6 +4,7 @@ on:
     branches:
       - main
       - feat/read-only-crypto-bounty-discovery-20261117
+      - feat/rhns-formal-governance-20261117
   pull_request:
   workflow_dispatch:
 jobs:
@@ -19,6 +20,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install durable queue test dependencies
+        run: python -m pip install 'redis>=5,<7' 'fakeredis>=2,<3' 'PyJWT[crypto]>=2.8,<3'
       - name: Compile read-only service
         run: python -m py_compile bounty_discovery_service.py
       - name: Unit tests, no external network
@@ -30,4 +33,4 @@ jobs:
         if: matrix.python-version == '3.12'
         run: |
           docker build -t garcar-bounty-review:ci .
-          docker run --rm --entrypoint python garcar-bounty-review:ci -c "import bounty_discovery_service, bounty_work_queue, bounty_intelligence, blockscout_evidence, immunefi_review; print('runtime_imports_ok')"
+          docker run --rm --entrypoint python garcar-bounty-review:ci -c "import bounty_preflight, bounty_discovery_service, bounty_work_queue, bounty_intelligence, blockscout_evidence, immunefi_review, rhns_governance; print('runtime_imports_ok')"

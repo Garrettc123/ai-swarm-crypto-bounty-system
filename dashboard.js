@@ -66,6 +66,63 @@ function render() {
     target.append(card);
   }
 }
+async function loadWorkQueue() {
+  const target = element("research-orders");
+  const summary = element("research-summary");
+  const holds = element("research-holds");
+  try {
+    const response = await fetch("/work-queue?limit=15", {cache: "no-store"});
+    if (!response.ok) throw Error("Work queue unavailable");
+    const data = await response.json();
+    const orders = Array.isArray(data.work_orders) ? data.work_orders : [];
+    const counts = data.counts || {};
+    target.replaceChildren();
+    summary.textContent = String(counts.research_ready ?? 0) +
+      " research candidates · " + String(counts.returned ?? 0) + " shown";
+    const reasons = data.held_reasons || {};
+    holds.textContent = String(counts.held_for_review ?? 0) +
+      " held by eligibility and safety gates. Holds: " +
+      (Object.entries(reasons).map(([reason, count]) =>
+        String(reason) + " (" + String(count) + ")").join(" · ") || "none") +
+      ". No claims, trading, payments, security tests or outbound actions.";
+    if (!orders.length) {
+      target.append(node("div",
+        "No candidates passed the research-only gate. This is not proof no funded bounties exist.",
+        "placeholder"));
+    }
+    for (const order of orders) {
+      const card = node("article", "", "candidate");
+      const left = node("div", "");
+      left.append(node("span", "READ-ONLY RESEARCH · APPROVAL REQUIRED", "tag warn"));
+      left.append(node("h3", order.title || "Candidate for verification"));
+      left.append(node("p", "Work ID " + String(order.work_id || "unknown") +
+        " · Funding and payment unverified", "reason"));
+      const right = node("div", "", "actions");
+      right.append(node("span", String(order.priority_score ?? "—") +
+        " / 100 review priority", "score-label"));
+      try {
+        const url = new URL(order.source_url);
+        if (url.protocol === "https:" && url.hostname === "github.com" &&
+            url.username === "" && url.password === "" &&
+            /^\\/[^/]+\\/[^/]+\\/issues\\/[1-9][0-9]*$/.test(url.pathname) &&
+            !url.search && !url.hash) {
+          const link = node("a", "Inspect canonical issue", "source-link");
+          link.href = url.href;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          right.append(link);
+        }
+      } catch (_) { /* Ignore untrusted URLs. */ }
+      card.append(left, right);
+      target.append(card);
+    }
+  } catch (_) {
+    summary.textContent = "Research queue unavailable";
+    holds.textContent = "No verified live work-order response. Do not rely on cached candidate data.";
+    target.replaceChildren(node("div", "Research queue could not be loaded.", "placeholder"));
+  }
+}
+
 async function load() {
   element("refresh").disabled = true;
   try {
@@ -96,6 +153,7 @@ async function load() {
       String(delta.no_longer_listed ?? 0) + " no longer listed. " +
       "Disappearance does not mean the task was completed or paid.";
     render();
+    await loadWorkQueue();
   } catch (_) {
     element("health").textContent = "Service unavailable or response invalid";
     element("source").textContent = "ERROR";

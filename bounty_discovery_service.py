@@ -19,6 +19,7 @@ from urllib.parse import parse_qs, urlencode, urlparse, urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener, urlopen
 
 from bounty_intelligence import ReceiptLog, enrich_candidate
+from bounty_work_queue import build_work_queue
 
 LOG = logging.getLogger("garcar.bounty.discovery")
 API_ROOT = "https://api.github.com/search/issues"
@@ -346,6 +347,18 @@ class Handler(BaseHTTPRequestHandler):
                 "scan_state": INDEX.snapshot()["scan_state"],
                 "note": "Readiness requires at least one recent source success",
             })
+        elif route == "/work-queue":
+            params = parse_qs(parsed.query, keep_blank_values=False)
+            try:
+                limit = int(params.get("limit", ["15"])[0])
+                state = INDEX.snapshot()
+                work_queue = build_work_queue(
+                    INDEX.candidates(), state["scan_state"], limit=limit
+                )
+            except (ValueError, TypeError):
+                self.send_json(400, {"error": "invalid_work_queue_limit"})
+                return
+            self.send_json(200, work_queue)
         elif route == "/bounties":
             params = parse_qs(parsed.query, keep_blank_values=False)
             try:

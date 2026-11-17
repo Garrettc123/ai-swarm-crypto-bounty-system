@@ -9,3 +9,7 @@
 !dashboard.html
 !dashboard.css
 !dashboard.js
+
+!bounty_queue_persistence.py
+!bounty_queue_oidc.py
+!queue_admin.py

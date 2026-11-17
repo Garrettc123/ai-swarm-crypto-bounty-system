@@ -13,6 +13,7 @@ import os
 import threading
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, urlencode, urlparse, urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener, urlopen
@@ -31,6 +32,12 @@ POLL_SECONDS = 1800
 REQUEST_TIMEOUT_SECONDS = 12
 MAX_RESPONSE_BYTES = 2_000_000
 STALE_AFTER_SECONDS = 3600
+ASSET_ROOT = Path(__file__).resolve().parent
+DASHBOARD_ASSETS = {
+    "/": ("dashboard.html", "text/html; charset=utf-8"),
+    "/dashboard.css": ("dashboard.css", "text/css; charset=utf-8"),
+    "/dashboard.js": ("dashboard.js", "text/javascript; charset=utf-8"),
+}
 
 
 def iso_utc() -> str:
@@ -252,10 +259,35 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def send_asset(self, path):
+        filename, content_type = DASHBOARD_ASSETS[path]
+        try:
+            data = (ASSET_ROOT / filename).read_bytes()
+        except OSError:
+            self.send_json(503, {"error": "dashboard_asset_unavailable"})
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Frame-Options", "DENY")
+        self.send_header("Referrer-Policy", "no-referrer")
+        self.send_header(
+            "Content-Security-Policy",
+            "default-src 'none'; script-src 'self'; style-src 'self'; "
+            "connect-src 'self'; img-src 'none'; base-uri 'none'; "
+            "form-action 'none'; frame-ancestors 'none'"
+        )
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
     def do_GET(self):
         parsed = urlsplit(self.path)
         route = parsed.path
-        if route in ("/", "/health", "/status"):
+        if route in DASHBOARD_ASSETS:
+            self.send_asset(route)
+        elif route in ("/health", "/status"):
             state = INDEX.snapshot()
             state["service"] = "garcar-crypto-bounty-discovery"
             state["alive"] = True

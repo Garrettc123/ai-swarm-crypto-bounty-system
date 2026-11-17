@@ -456,7 +456,8 @@ class Handler(BaseHTTPRequestHandler):
         # No general API mutation endpoints. The only write permitted from the
         # public web is public discovery metadata from our own signed CI job.
         if urlsplit(self.path).path != "/internal/ingest":
-            self.send_json(404, {"error": "not_found"})
+            # Preserve BaseHTTPRequestHandler's unsupported-method contract.
+            self.send_error(501, "Unsupported method")
             return
         if QUEUE is None:
             self.send_json(503, {"error": "durable_queue_not_configured"})

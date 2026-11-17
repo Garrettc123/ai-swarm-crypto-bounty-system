@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   scan:
@@ -34,6 +35,9 @@ jobs:
           python crypto/bounty_hunter.py scan --db artifacts/bounties.sqlite3 --output artifacts/latest-bounties.json --limit 1000
           python crypto/bounty_hunter.py report --db artifacts/bounties.sqlite3 --output artifacts/earnings-report.json
           python crypto/bounty_triage.py --input artifacts/latest-bounties.json --output-dir artifacts/
+      - name: Sync public discoveries to guarded staging queue
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        run: python crypto/push_queue_oidc.py --input artifacts/latest-bounties.json
       - name: Summary
         if: always()
         run: |

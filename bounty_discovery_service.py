@@ -22,6 +22,10 @@ from bounty_intelligence import ReceiptLog, enrich_candidate
 from bounty_work_queue import build_work_queue, safe_issue_url
 from rhns_governance import public_governance_status, validate_review_orders
 from immunefi_review import public_policy
+from bounty_queue_persistence import from_environment
+from bounty_queue_oidc import verify_actions_token
+
+QUEUE = from_environment()
 
 LOG = logging.getLogger("garcar.bounty.discovery")
 API_ROOT = "https://api.github.com/search/issues"
@@ -382,6 +386,15 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(400, {"error": "invalid_work_queue_limit"})
                 return
             self.send_json(200, work_queue)
+        elif route == "/queue-status":
+            if QUEUE is None:
+                self.send_json(503, {"error": "durable_queue_not_configured"})
+                return
+            try:
+                self.send_json(200, QUEUE.summary())
+            except Exception:
+                LOG.exception("Queue status read failed")
+                self.send_json(503, {"error": "durable_queue_unavailable"})
         elif route == "/bounties":
             params = parse_qs(parsed.query, keep_blank_values=False)
             try:
@@ -439,6 +452,41 @@ class Handler(BaseHTTPRequestHandler):
         else:
             self.send_json(404, {"error": "not_found"})
 
+    def do_POST(self):
+        # No general API mutation endpoints. The only write permitted from the
+        # public web is public discovery metadata from our own signed CI job.
+        if urlsplit(self.path).path != "/internal/ingest":
+            self.send_json(404, {"error": "not_found"})
+            return
+        if QUEUE is None:
+            self.send_json(503, {"error": "durable_queue_not_configured"})
+            return
+        bearer = self.headers.get("Authorization", "")
+        if not bearer.startswith("Bearer "):
+            self.send_json(401, {"error": "identity_token_required"})
+            return
+        try:
+            verify_actions_token(bearer[7:])
+        except PermissionError:
+            self.send_json(403, {"error": "workflow_identity_denied"})
+            return
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            if not 0 < length <= 4 * 1024 * 1024:
+                self.send_json(413, {"error": "invalid_payload_size"})
+                return
+            payload = json.loads(self.rfile.read(length))
+            result = QUEUE.ingest(payload, "github_actions")
+        except (ValueError, TypeError, json.JSONDecodeError) as exc:
+            self.send_json(400, {"error": "invalid_discovery_payload", "type": type(exc).__name__})
+            return
+        except Exception:
+            LOG.exception("Queue ingest failed")
+            self.send_json(503, {"error": "durable_queue_unavailable"})
+            return
+        self.send_json(200, {"status": "ingested", **result,
+                             "submission_enabled": False, "payments_enabled": False})
+
     def log_message(self, fmt, *args):
         LOG.info("%s - %s", self.client_address[0], fmt % args)
 
@@ -446,6 +494,13 @@ class Handler(BaseHTTPRequestHandler):
 def scanner_loop(stop: threading.Event, index: BountyIndex):
     while not stop.is_set():
         index.scan_once()
+        if QUEUE is not None and index.ready() and index.snapshot()["scan_state"] == "ok":
+            try:
+                result = QUEUE.ingest({"scan_state": "ok", "items": index.candidates()},
+                                      "railway_public_scout")
+                LOG.info("Durable queue observed %d public scout listings", result["accepted"])
+            except Exception:
+                LOG.exception("Durable queue ingest failed; scanner continues in read-only mode")
         stop.wait(POLL_SECONDS)
 
 

@@ -19,6 +19,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install durable queue test dependencies
+        run: python -m pip install 'redis>=5,<7' 'fakeredis>=2,<3' 'PyJWT[crypto]>=2.8,<3'
       - name: Compile read-only service
         run: python -m py_compile bounty_discovery_service.py
       - name: Unit tests, no external network

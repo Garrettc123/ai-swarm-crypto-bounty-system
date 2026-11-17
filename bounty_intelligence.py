@@ -80,6 +80,15 @@ def enrich_candidate(item: dict, *, now: datetime | None = None) -> dict:
     if any(x in label_set for x in ("help wanted", "good first issue", "up-for-grabs")):
         score += 10
         reasons.append("Repository label suggests contributor availability")
+    flags = [str(x)[:80] for x in item.get("risk_flags", [])
+             if isinstance(x, str)]
+    mirrored = bool(item.get("possibly_mirrored", False))
+    if mirrored:
+        score = max(0, score - 20)
+        reasons.append("Possible mirrored/aggregated listing; review canonical source")
+    if flags:
+        score = 0
+        reasons.append("Possible ineligible or unfunded listing: " + ", ".join(flags))
     result = dict(item)
     result.update({
         "candidate_id": digest({"source": "github", "url": item["url"]})[:20],
@@ -89,7 +98,7 @@ def enrich_candidate(item: dict, *, now: datetime | None = None) -> dict:
         "reward_terms_verified": False,
         "payout_confirmed": False,
         "authorization_to_test": False,
-        "status": "candidate_unverified",
+        "status": "blocked_for_review" if flags else "candidate_unverified",
         "priority_score": min(score, 100),
         "priority_label": "review_priority_not_profitability",
         "priority_reasons": reasons,

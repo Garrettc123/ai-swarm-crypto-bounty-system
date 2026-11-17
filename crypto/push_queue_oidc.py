@@ -28,7 +28,7 @@ class NoRedirect(HTTPRedirectHandler):
 def fetch_token(opener, request_url, request_token):
     if not request_url.startswith("https://") or not request_token:
         raise RuntimeError("GitHub Actions OIDC unavailable")
-    if urlsplit(request_url).hostname != "pipelines.actions.githubusercontent.com":
+    if not (urlsplit(request_url).hostname or "").endswith(".actions.githubusercontent.com"):
         raise RuntimeError("Unexpected GitHub OIDC token endpoint")
     sep = "&" if "?" in request_url else "?"
     request = Request(

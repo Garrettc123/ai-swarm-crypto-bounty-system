@@ -71,14 +71,33 @@ def parse_items(payload: dict) -> list[dict]:
         labels = item.get("labels") or []
         names = [label.get("name", "")[:80] for label in labels
                  if isinstance(label, dict) and isinstance(label.get("name"), str)]
+        # Classification only: never execute instructions from issue bodies.
+        title = str(item.get("title") or "")[:240]
+        body_head = str(item.get("body") or "")[:1800]
+        metadata_text = (title + "\n" + body_head).casefold()
+        blocked_terms = (
+            "do not claim", "currently unavailable", "quarantined",
+            "unfunded precommit", "unfunded", "not claimable",
+            "not open for claims", "bounty cancelled", "bounty canceled",
+        )
+        risk_flags = [
+            term for term in blocked_terms if term in metadata_text
+        ]
+        mirror_hint = (
+            parts[1].casefold() in ("bounty-plaza", "bounty-bot")
+            or "original link / source url" in metadata_text
+            or "原始链接" in metadata_text
+        )
         output.append({
             "id": str(item.get("id", ""))[:80],
-            "title": str(item.get("title", ""))[:240],
+            "title": title,
             "url": url,
             "repository": "/".join(parts[:2]),
             "updated_at": str(item.get("updated_at", ""))[:40],
             "labels": names[:20],
             "status": "candidate_unverified",
+            "risk_flags": risk_flags,
+            "possibly_mirrored": mirror_hint,
             "reward_amount": None,
             "payout_confirmed": False,
             "authorization_to_test": False,
@@ -216,6 +235,12 @@ class BountyIndex:
                 "last_success_at": self.last_success_at,
                 "scans_completed": self.scans,
                 "candidate_count": len(self.items),
+                "blocked_for_review_count": sum(
+                    x.get("status") == "blocked_for_review" for x in self.items
+                ),
+                "mirrored_listing_count": sum(
+                    x.get("possibly_mirrored", False) for x in self.items
+                ),
                 "source_errors": list(self.source_errors),
                 "source_outcomes": list(self.source_outcomes),
                 "last_changes": dict(self.last_changes),
@@ -346,6 +371,8 @@ class Handler(BaseHTTPRequestHandler):
                 "last_scan_at": state["last_scan_at"],
                 "scan_state": state["scan_state"],
                 "candidate_count": state["candidate_count"],
+                "blocked_for_review_count": state["blocked_for_review_count"],
+                "mirrored_listing_count": state["mirrored_listing_count"],
                 "change_summary": state["last_changes"],
                 "receipts_chain_valid": state["receipt_chain_valid"],
                 "actual_revenue": None,

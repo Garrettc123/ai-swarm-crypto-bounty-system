@@ -1,0 +1,50 @@
+name: Public Crypto Bounty Scan
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 14 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install minimal runtime dependency
+        run: python -m pip install 'aiohttp>=3.9,<4'
+      - name: Unit tests (offline)
+        run: python -m unittest discover -s tests -p 'test_bounty_hunter.py' -v
+      - name: Query live public feeds over HTTPS
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python crypto/bounty_hunter.py scan --db artifacts/bounties.sqlite3 --output artifacts/latest-bounties.json --limit 100
+          python crypto/bounty_hunter.py report --db artifacts/bounties.sqlite3 --output artifacts/earnings-report.json
+      - name: Summary
+        if: always()
+        run: |
+          if [ -f artifacts/latest-bounties.json ]; then
+            python - <<'PY'
+          import json, os
+          with open('artifacts/latest-bounties.json', encoding='utf-8') as f:
+              result=json.load(f)
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as f:
+              f.write(f"## Public bounty discovery\n\nFound {result['discovered']} listed opportunities.\n\n")
+              f.write(f"Source errors: {len(result['source_errors'])}.\n\n")
+              f.write("No bounty tasks performed, no submissions sent, and no payouts credited.\n")
+          PY
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bounty-scan-${{ github.run_id }}
+          path: artifacts/
+          if-no-files-found: ignore
+          retention-days: 14

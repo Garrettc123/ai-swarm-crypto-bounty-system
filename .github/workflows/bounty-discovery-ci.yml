@@ -4,6 +4,7 @@ on:
     branches:
       - main
       - feat/read-only-crypto-bounty-discovery-20261117
+      - feat/rhns-formal-governance-20261117
   pull_request:
   workflow_dispatch:
 jobs:

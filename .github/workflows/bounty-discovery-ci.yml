@@ -22,4 +22,4 @@ jobs:
       - name: Compile read-only service
         run: python -m py_compile bounty_discovery_service.py
       - name: Unit tests, no external network
-        run: python -m unittest discover -s tests -p 'test_bounty_discovery_service.py' -v
+        run: python -m unittest discover -s tests -p 'test_bounty_*.py' -v

@@ -22,10 +22,12 @@ class BountyTests(unittest.TestCase):
         rows=b.github_rows({"items":[
             {"html_url":"https://github.com/a/b/issues/1","title":"Crypto bounty","body":"Open issue"},
             {"html_url":"https://github.com/a/b/issues/2","title":"Bounty: $150","body":""},
-            {"html_url":"https://github.com/a/b/issues/3","title":"Revenue dashboard","body":"Bounty: $850 is mentioned in a different status report."}]})
+            {"html_url":"https://github.com/a/b/issues/3","title":"Revenue dashboard","body":"Bounty: $850 is mentioned in a different status report."},
+            {"html_url":"https://github.com/a/b/issues/4","title":"[Bounty $3k] Research","body":""}]})
         self.assertIsNone(rows[0]["reward_max_usd"])
         self.assertEqual(rows[1]["reward_max_usd"],150)
         self.assertIsNone(rows[2]["reward_max_usd"])
+        self.assertEqual(rows[3]["reward_max_usd"],3000)
 
     def test_fail_closed_and_db(self):
         with tempfile.TemporaryDirectory() as folder:

@@ -65,6 +65,32 @@ class TestReadOnlyDashboard(unittest.TestCase):
             self.assertEqual(value["returned"], 1)
             self.assertFalse(value["items"][0]["authorization_to_test"])
 
+    def test_immunefi_policy_is_reachable_and_never_enables_automation(self):
+        with urlopen(self.root + "/immunefi-policy", timeout=3) as response:
+            self.assertEqual(response.status, 200)
+            self.assertIn("application/json", response.headers["Content-Type"])
+            value = json.load(response)
+        self.assertEqual(value["integration"], "manual_review_only")
+        self.assertFalse(value["automated_website_access"])
+        self.assertFalse(value["security_testing_enabled"])
+        self.assertFalse(value["automatic_submission_enabled"])
+        self.assertEqual(value["programs_imported"], 0)
+        self.assertEqual(value["official_links"]["terms"],
+                         "https://immunefi.com/terms-of-use/")
+
+        with urlopen(self.root + "/", timeout=3) as response:
+            html = response.read().decode("utf-8")
+        self.assertIn('id="immunefi-status"', html)
+        self.assertIn('href="https://immunefi.com/rules/"', html)
+
+    def test_immunefi_policy_unhandled_http_methods_fail_closed(self):
+        from urllib.request import Request
+        request = Request(self.root + "/immunefi-policy",
+                          data=b'{"program":"untrusted"}', method="POST")
+        with self.assertRaises(HTTPError) as error:
+            urlopen(request, timeout=3)
+        self.assertEqual(error.exception.code, 501)
+
     def test_invalid_query_does_not_execute_search(self):
         with self.assertRaises(HTTPError) as error:
             urlopen(self.root + "/bounties?limit=invalid", timeout=3)

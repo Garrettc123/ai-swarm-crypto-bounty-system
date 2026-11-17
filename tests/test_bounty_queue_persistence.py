@@ -40,6 +40,7 @@ class TestQueuePersistence(unittest.TestCase):
         self.assertEqual(self.store.summary()["observed_unique"], 2)
         self.assertEqual(self.store.get(row["item_id"])["workflow_state"], "assigned")
         self.assertEqual(self.store.get(row["item_id"])["title"], "Updated issue")
+        self.assertEqual(self.store.get(row["item_id"])["advertised_max_usd"], "250")
         feeds = self.client.smembers(self.store._key(row["item_id"]) + ":feeds")
         self.assertEqual(feeds, {"github_actions", "railway_public_scout"})
 

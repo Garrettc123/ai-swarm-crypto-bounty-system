@@ -1,7 +1,7 @@
 FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PORT=8080
 WORKDIR /app
-COPY bounty_discovery_service.py /app/bounty_discovery_service.py
+COPY bounty_discovery_service.py bounty_intelligence.py /app/
 RUN useradd --uid 10001 --create-home --no-log-init scout
 USER scout
 EXPOSE 8080

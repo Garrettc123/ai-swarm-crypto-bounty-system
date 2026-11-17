@@ -1,7 +1,9 @@
 *
 !bounty_discovery_service.py
-!Dockerfile
 !bounty_intelligence.py
+!bounty_work_queue.py
+!blockscout_evidence.py
+!Dockerfile
 !dashboard.html
 !dashboard.css
 !dashboard.js

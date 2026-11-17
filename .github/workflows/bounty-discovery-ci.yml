@@ -23,3 +23,11 @@ jobs:
         run: python -m py_compile bounty_discovery_service.py
       - name: Unit tests, no external network
         run: python -m unittest discover -s tests -p 'test_bounty_*.py' -v
+      - name: Validate browser command center JavaScript
+        if: matrix.python-version == '3.12'
+        run: node --check dashboard.js
+      - name: Verify production Docker build and imports
+        if: matrix.python-version == '3.12'
+        run: |
+          docker build -t garcar-bounty-review:ci .
+          docker run --rm --entrypoint python garcar-bounty-review:ci -c "import bounty_discovery_service, bounty_work_queue, bounty_intelligence, blockscout_evidence; print('runtime_imports_ok')"

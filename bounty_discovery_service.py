@@ -20,6 +20,7 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener, urlopen
 
 from bounty_intelligence import ReceiptLog, enrich_candidate
 from bounty_work_queue import build_work_queue, safe_issue_url
+from rhns_governance import public_governance_status, validate_review_orders
 from immunefi_review import public_policy
 
 LOG = logging.getLogger("garcar.bounty.discovery")
@@ -347,14 +348,36 @@ class Handler(BaseHTTPRequestHandler):
                 "scan_state": INDEX.snapshot()["scan_state"],
                 "note": "Readiness requires at least one recent source success",
             })
+        elif route == "/governance":
+            state = INDEX.snapshot()
+            self.send_json(200, public_governance_status(
+                scan_state=state["scan_state"],
+                source_ready=INDEX.ready(),
+                receipts_valid=state["receipt_chain_valid"],
+            ))
         elif route == "/work-queue":
             params = parse_qs(parsed.query, keep_blank_values=False)
             try:
                 limit = int(params.get("limit", ["15"])[0])
                 state = INDEX.snapshot()
+                if not INDEX.ready() or not state["receipt_chain_valid"]:
+                    self.send_json(503, {
+                        "error": "source_not_ready_or_receipt_integrity_failed",
+                        "external_execution_enabled": False,
+                    })
+                    return
                 work_queue = build_work_queue(
                     INDEX.candidates(), state["scan_state"], limit=limit
                 )
+                formal = validate_review_orders(work_queue["work_orders"])
+                if not formal["passed"]:
+                    self.send_json(503, {
+                        "error": "formal_governance_gate_failed",
+                        "violations": formal["violations"],
+                        "external_execution_enabled": False,
+                    })
+                    return
+                work_queue["formal_governance"] = formal
             except (ValueError, TypeError):
                 self.send_json(400, {"error": "invalid_work_queue_limit"})
                 return

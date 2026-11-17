@@ -30,4 +30,4 @@ jobs:
         if: matrix.python-version == '3.12'
         run: |
           docker build -t garcar-bounty-review:ci .
-          docker run --rm --entrypoint python garcar-bounty-review:ci -c "import bounty_discovery_service, bounty_work_queue, bounty_intelligence, blockscout_evidence, immunefi_review; print('runtime_imports_ok')"
+          docker run --rm --entrypoint python garcar-bounty-review:ci -c "import bounty_discovery_service, bounty_work_queue, bounty_intelligence, blockscout_evidence, immunefi_review, rhns_governance; print('runtime_imports_ok')"

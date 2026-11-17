@@ -28,6 +28,7 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_bounty_hunter.py' -v
           python -m unittest discover -s tests -p 'test_bounty_triage.py' -v
+          python -m unittest discover -s tests -p 'test_bounty_push_queue_oidc.py' -v
       - name: Query live public feeds over HTTPS
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

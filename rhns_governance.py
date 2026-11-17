@@ -416,8 +416,10 @@ def validate_plan(task_ids: Iterable[str],
                   decomposition: Iterable[tuple[str, str]],
                   deadlines: Mapping[str, datetime]) -> None:
     """Validate two separate DAGs and single-owner child accounting."""
-    nodes = set(task_ids)
-    if not nodes or any(not isinstance(i, str) or not i for i in nodes):
+    node_list = list(task_ids)
+    nodes = set(node_list)
+    if (not nodes or len(nodes) != len(node_list)
+            or any(not isinstance(i, str) or not i for i in node_list)):
         raise InvariantError("empty or invalid plan")
     if nodes != set(deadlines) or any(not _aware(d) for d in deadlines.values()):
         raise InvariantError("missing task deadlines")
@@ -499,6 +501,8 @@ def expansion_admissible(*, lifecycle: Lifecycle, search_depth: int,
     if not _aware(now) or not _aware(deadline):
         return False
     return (lifecycle is Lifecycle.RUNNING
+            and type(estimated_voc) in (float, int)
+            and type(margin) in (float, int)
             and type(search_depth) is int and type(depth_limit) is int
             and 0 <= search_depth < depth_limit
             and authorized_computation is True
@@ -545,6 +549,7 @@ def validate_review_orders(orders: object) -> dict[str, Any]:
             ids.add(ident)
         permissions = order.get("allowed_actions")
         if (not isinstance(permissions, list)
+                or any(not isinstance(action, str) for action in permissions)
                 or not set(permissions).issubset(READ_ACTIONS)):
             problems.append(f"order_{index}:unauthorized_capability")
         if (order.get("external_execution_enabled") is not False

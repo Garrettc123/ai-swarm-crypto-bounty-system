@@ -24,13 +24,16 @@ jobs:
       - name: Install minimal runtime dependency
         run: python -m pip install 'aiohttp>=3.9,<4'
       - name: Unit tests (offline)
-        run: python -m unittest discover -s tests -p 'test_bounty_hunter.py' -v
+        run: |
+          python -m unittest discover -s tests -p 'test_bounty_hunter.py' -v
+          python -m unittest discover -s tests -p 'test_bounty_triage.py' -v
       - name: Query live public feeds over HTTPS
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python crypto/bounty_hunter.py scan --db artifacts/bounties.sqlite3 --output artifacts/latest-bounties.json --limit 100
+          python crypto/bounty_hunter.py scan --db artifacts/bounties.sqlite3 --output artifacts/latest-bounties.json --limit 1000
           python crypto/bounty_hunter.py report --db artifacts/bounties.sqlite3 --output artifacts/earnings-report.json
+          python crypto/bounty_triage.py --input artifacts/latest-bounties.json --output-dir artifacts/
       - name: Summary
         if: always()
         run: |

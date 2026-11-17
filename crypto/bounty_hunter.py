@@ -123,9 +123,13 @@ class CryptoBountyHunter:
                             headers2["Authorization"]="Bearer "+(os.getenv("GITHUB_TOKEN") or os.getenv("GH_TOKEN"))
                         async with session.get(url,headers=headers2,allow_redirects=False) as response:
                             response.raise_for_status()
-                            raw=await response.content.read(16*1024*1024+1)
-                            if len(raw)>16*1024*1024: raise ValueError("Source too large")
-                            rows=parser(json.loads(raw))
+                            chunks=[]
+                            bytes_read=0
+                            async for chunk in response.content.iter_chunked(65536):
+                                bytes_read+=len(chunk)
+                                if bytes_read>16*1024*1024: raise ValueError("Source too large")
+                                chunks.append(chunk)
+                            rows=parser(json.loads(b"".join(chunks)))
                         save(con,source,rows)
                         found.extend(rows)
                         LOG.info("%s: %d programs/issues",source,len(rows))

@@ -2,3 +2,6 @@
 !bounty_discovery_service.py
 !Dockerfile
 !bounty_intelligence.py
+!dashboard.html
+!dashboard.css
+!dashboard.js

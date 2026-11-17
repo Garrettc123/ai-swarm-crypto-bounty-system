@@ -137,8 +137,14 @@ class QueueStore:
             pipe.hsetnx(key, "first_seen_at", at)
             pipe.hset(key, mapping={
                 "url": row["url"], "title": row["title"], "platform": row["platform"],
-                "last_seen_at": at, "advertised_max_usd": row["advertised_max_usd"],
+                "last_seen_at": at,
             })
+            # A source without a reward must not erase a previously observed
+            # advertised amount from another discovery feed.
+            if row["advertised_max_usd"] != "":
+                pipe.hset(key, "advertised_max_usd", row["advertised_max_usd"])
+            else:
+                pipe.hsetnx(key, "advertised_max_usd", "")
             pipe.sadd(self.prefix + ":index", row["id"])
             pipe.sadd(key + ":feeds", feed)
         pipe.hset(self.prefix + ":feed_status", mapping={

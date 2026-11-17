@@ -72,13 +72,13 @@ def github_rows(data):
         labels=p.get("labels") or []
         has_bounty_label=any("bounty" in str(x.get("name","")).lower()
                              for x in labels if isinstance(x,dict))
-        m=re.search(r"\bbounty\s*(?::|=|of|up to)?\s*\$\s*([\d,]+(?:\.\d{1,2})?)",title,re.I)
+        m=re.search(r"\bbounty\s*(?::|=|of|up to)?\s*\$\s*([\d,]+(?:\.\d{1,2})?)([kKmM]?)",title,re.I)
         if m is None and (re.search(r"\bbounty\b",title,re.I) or has_bounty_label):
-            m=re.search(r"\b(?:bounty|reward|payout)\s*(?::|=|of|up to)?\s*\$\s*([\d,]+(?:\.\d{1,2})?)",
+            m=re.search(r"\b(?:bounty|reward|payout)\s*(?::|=|of|up to)?\s*\$\s*([\d,]+(?:\.\d{1,2})?)([kKmM]?)",
                         body[:1500],re.I)
         rows.append({"id":"github:"+url.split("github.com/",1)[1],
             "platform":"github","title":str(p.get("title") or "")[:300],"url":url,
-            "reward_max_usd":amount(m.group(1)) if m else None,
+            "reward_max_usd":amount(m.group(1)+m.group(2)) if m else None,
             "status":"listed_not_validated","eligibility":"check_issue_rules",
             "kyc_required":None})
     return rows

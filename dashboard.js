@@ -125,6 +125,24 @@ async function loadWorkQueue() {
   }
 }
 
+async function loadImmunefi() {
+  const target = element("immunefi-status");
+  try {
+    const response = await fetch("/immunefi-policy", {cache: "no-store"});
+    if (!response.ok) throw Error("Policy unavailable");
+    const policy = await response.json();
+    if (policy.integration !== "manual_review_only" ||
+        policy.automated_website_access !== false ||
+        policy.security_testing_enabled !== false ||
+        policy.automatic_submission_enabled !== false) {
+      throw Error("Unexpected action policy");
+    }
+    target.textContent = "MANUAL REVIEW ONLY · EXTERNAL ACTIONS OFF";
+  } catch (_) {
+    target.textContent = "IMMUNEFI POLICY UNAVAILABLE · DO NOT TEST";
+  }
+}
+
 async function load() {
   element("refresh").disabled = true;
   try {
@@ -156,6 +174,7 @@ async function load() {
       "Disappearance does not mean the task was completed or paid.";
     render();
     await loadWorkQueue();
+    await loadImmunefi();
   } catch (_) {
     element("health").textContent = "Service unavailable or response invalid";
     element("source").textContent = "ERROR";

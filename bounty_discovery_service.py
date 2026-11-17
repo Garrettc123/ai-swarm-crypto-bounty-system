@@ -19,7 +19,8 @@ from urllib.parse import parse_qs, urlencode, urlparse, urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener, urlopen
 
 from bounty_intelligence import ReceiptLog, enrich_candidate
-from bounty_work_queue import build_work_queue
+from bounty_work_queue import build_work_queue, safe_issue_url
+from immunefi_review import public_policy
 
 LOG = logging.getLogger("garcar.bounty.discovery")
 API_ROOT = "https://api.github.com/search/issues"
@@ -46,21 +47,16 @@ def iso_utc() -> str:
 
 
 def public_issue_url(value: object) -> bool:
-    if not isinstance(value, str):
-        return False
-    p = urlparse(value)
-    return (
-        p.scheme == "https" and p.hostname == "github.com"
-        and p.username is None and p.password is None
-        and p.port is None and p.path.startswith("/")
-        and len(p.path.split("/")) >= 5
-        and p.path.split("/")[3] == "issues"
-    )
+    # Share the work-queue's strict canonical issue URL validator.
+    # The old parser accepted extra path segments and query strings.
+    return safe_issue_url(value)
 
 
 def parse_items(payload: dict) -> list[dict]:
     output = []
     for item in payload.get("items", []):
+        # GitHub search response elements are untrusted; skip corrupt rows
+        # instead of terminating the recurring scanner thread.
         if not isinstance(item, dict) or item.get("state") != "open":
             continue
         if item.get("pull_request") is not None:
@@ -69,7 +65,9 @@ def parse_items(payload: dict) -> list[dict]:
         if not public_issue_url(url):
             continue
         parts = urlparse(url).path.strip("/").split("/")
-        labels = item.get("labels") or []
+        labels = item.get("labels")
+        if not isinstance(labels, list):
+            labels = []
         names = [label.get("name", "")[:80] for label in labels
                  if isinstance(label, dict) and isinstance(label.get("name"), str)]
         # Classification only: never execute instructions from issue bodies.
@@ -191,8 +189,10 @@ class BountyIndex:
                     row["source_stale"] = False
                     row["source_observed_at"] = scanned_at
                     results[row["url"]] = row
-            except (HTTPError, URLError, TimeoutError, OSError,
-                    ValueError, TypeError) as exc:
+            except Exception as exc:
+                # Fail closed for unexpected upstream data or adapter defects.
+                # Preserve the previous snapshot as stale and keep polling.
+                # This boundary never masks errors as successful fresh scans.
                 # Errors never turn into "zero opportunities" or "all closed".
                 errors.append(f"source_error for query {query}: {type(exc).__name__}")
                 LOG.warning("Bounty source query failed: %s (%s)",
@@ -383,6 +383,10 @@ class Handler(BaseHTTPRequestHandler):
                 "note": "Issue metadata is not proof of funding, permission, or payout.",
                 "items": rows[:limit],
             })
+        elif route == "/immunefi-policy":
+            # Public, immutable policy metadata only. No authenticated
+            # user intake, bug findings, target scans or Immunefi GETs.
+            self.send_json(200, public_policy())
         elif route == "/sources":
             state = INDEX.snapshot()
             self.send_json(200, {

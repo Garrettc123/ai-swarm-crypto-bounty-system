@@ -109,6 +109,8 @@ def github_search(query: str, opener=None) -> list[dict]:
     payload = json.loads(raw)
     if not isinstance(payload, dict) or not isinstance(payload.get("items"), list):
         raise ValueError("GitHub returned an unexpected response")
+    if payload.get("incomplete_results") is True:
+        raise ValueError("GitHub search reported incomplete results")
     return parse_items(payload)
 
 
@@ -192,13 +194,17 @@ class BountyIndex:
             self.items = items
             if successes:
                 self.last_success_at = scanned_at
-            self.receipts.append(
+            receipt = self.receipts.append(
                 time_utc=scanned_at,
                 scan_state=state,
                 observed_urls=sorted(urls),
                 query_outcomes=outcomes,
                 count=len(items)
             )
+        LOG.info(
+            "Bounty scan: state=%s candidates=%d source_errors=%d receipt=%s",
+            state, len(items), len(errors), receipt["event_hash"][:16]
+        )
 
     def snapshot(self):
         with self._lock:

@@ -104,7 +104,9 @@ async function loadWorkQueue() {
         const url = new URL(order.source_url);
         if (url.protocol === "https:" && url.hostname === "github.com" &&
             url.username === "" && url.password === "" &&
-            /^\\/[^/]+\\/[^/]+\\/issues\\/[1-9][0-9]*$/.test(url.pathname) &&
+            url.pathname.split("/").length === 5 &&
+            url.pathname.split("/")[3] === "issues" &&
+            /^[1-9][0-9]*$/.test(url.pathname.split("/")[4]) &&
             !url.search && !url.hash) {
           const link = node("a", "Inspect canonical issue", "source-link");
           link.href = url.href;

@@ -38,6 +38,10 @@ function render() {
       left.append(node("span", skillName, "tag"));
     }
     left.append(node("span", "Reward unverified", "tag warn"));
+    if (row.status === "blocked_for_review") {
+      left.append(node("span", "BLOCKED FOR REVIEW · DO NOT CLAIM", "tag warn"));
+    }
+    if (row.possibly_mirrored) left.append(node("span", "Possible mirror", "tag warn"));
     if (row.source_stale) left.append(node("span", "Stale observation", "tag warn"));
     left.append(node("p", (row.priority_reasons || []).join(" · "), "reason"));
     const right = node("div", "", "actions");

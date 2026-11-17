@@ -33,8 +33,6 @@ def contract(**kw):
 
 class TestLedger(unittest.TestCase):
     def test_integer_fixed_point_units_and_reject_bools(self):
-        for invalid in (R(-1, 0, 0),) if False else ():
-            pass
         for value in (-1, 0.1, True, "2", None):
             with self.subTest(value=value), self.assertRaises(InvariantError):
                 ResourceVector(tokens=value)
@@ -354,6 +352,16 @@ class TestWorkQueueGate(unittest.TestCase):
         self.assertFalse(validate_review_orders([
             self.valid_order(), self.valid_order()])["passed"])
         self.assertFalse(validate_review_orders([self.valid_order()] * 26)["passed"])
+
+    def test_malformed_permission_list_fails_closed(self):
+        order = {**self.valid_order(), "allowed_actions": [{"action": "wallet_sign"}]}
+        result = validate_review_orders([order])
+        self.assertFalse(result["passed"])
+        self.assertIn("order_0:unauthorized_capability", result["violations"])
+
+    def test_duplicate_task_ids_rejected_by_plan(self):
+        with self.assertRaises(InvariantError):
+            validate_plan(["a", "a"], [], [], {"a": D})
 
     def test_public_governance_never_claims_external_dispatch(self):
         state = public_governance_status(scan_state="ok", source_ready=True,

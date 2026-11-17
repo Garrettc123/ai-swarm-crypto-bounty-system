@@ -13,3 +13,4 @@
 !bounty_queue_persistence.py
 !bounty_queue_oidc.py
 !queue_admin.py
+!bounty_preflight.py

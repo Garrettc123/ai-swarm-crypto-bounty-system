@@ -51,6 +51,40 @@ class TestIntelligence(unittest.TestCase):
         self.assertFalse(any("updated within" in reason
                              for reason in result["priority_reasons"]))
 
+    def test_unfunded_issue_is_blocked_and_not_priority_target(self):
+        incoming = {
+            "items": [{
+                "id": 7, "state": "open",
+                "title": "[UNFUNDED PRECOMMIT] Do not claim",
+                "body": "Funding is pending and the work is not authorized.",
+                "html_url": "https://github.com/real/issue-repo/issues/7",
+                "updated_at": "2026-11-17T13:00:00Z",
+                "labels": [{"name": "bounty"}],
+            }]
+        }
+        parsed = svc.parse_items(incoming)
+        self.assertEqual(len(parsed), 1)
+        self.assertIn("unfunded", parsed[0]["risk_flags"][0] +
+                      " ".join(parsed[0]["risk_flags"]))
+        classified = enrich_candidate(parsed[0], now=NOW)
+        self.assertEqual(classified["status"], "blocked_for_review")
+        self.assertEqual(classified["priority_score"], 0)
+        self.assertFalse(classified["authorization_to_test"])
+
+    def test_aggregated_mirror_receives_priority_penalty(self):
+        base = {
+            "id": 5, "state": "open", "title": "Python release task",
+            "updated_at": "2026-11-17T13:00:00Z",
+            "labels": [{"name": "bounty"}],
+        }
+        direct = dict(base, html_url="https://github.com/real/repo/issues/5")
+        mirror = dict(base, html_url="https://github.com/other/bounty-plaza/issues/9")
+        original = enrich_candidate(svc.parse_items({"items": [direct]})[0], now=NOW)
+        duplicated = enrich_candidate(svc.parse_items({"items": [mirror]})[0], now=NOW)
+        self.assertTrue(duplicated["possibly_mirrored"])
+        self.assertLess(duplicated["priority_score"], original["priority_score"])
+        self.assertFalse(duplicated["reward_terms_verified"])
+
     def test_receipts_chain_and_tamper_detection(self):
         ledger = ReceiptLog()
         first = ledger.append(

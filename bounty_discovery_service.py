@@ -79,10 +79,25 @@ def parse_items(payload: dict) -> list[dict]:
             "do not claim", "currently unavailable", "quarantined",
             "unfunded precommit", "unfunded", "not claimable",
             "not open for claims", "bounty cancelled", "bounty canceled",
+            "verification unavailable", "verification is not ready",
+            "no verified funding", "funding unavailable",
+            "not accepting claims", "closed to new work",
+            "scoring window closed", "delivery cutoff has passed",
         )
-        risk_flags = [
-            term for term in blocked_terms if term in metadata_text
-        ]
+        # Explicit availability and funding labels override marketing titles
+        # and even a simultaneous "funded-live" label. A funded but
+        # unverifiable claim is still not a payable opportunity.
+        blocked_labels = {
+            "verification-unavailable", "funding-needed", "funding-unavailable",
+            "claiming-disabled", "claims-paused", "not-claimable",
+            "quarantined", "bounty-cancelled", "bounty-canceled",
+        }
+        risk_flags = [term for term in blocked_terms if term in metadata_text]
+        risk_flags.extend(
+            "label:" + name.casefold()
+            for name in names if name.casefold() in blocked_labels
+        )
+        risk_flags = list(dict.fromkeys(risk_flags))
         mirror_hint = (
             parts[1].casefold() in ("bounty-plaza", "bounty-bot")
             or "original link / source url" in metadata_text

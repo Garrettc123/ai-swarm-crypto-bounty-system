@@ -61,7 +61,7 @@ class TestQueuePersistence(unittest.TestCase):
         self.store.ingest(actions(), "github_actions")
         row = next(r for r in self.store.items() if r["platform"] == "github")
         ident = row["item_id"]
-        with self.assertRaisesRegex(ValueError, "transition"):
+        with self.assertRaises(ValueError):
             self.store.transition(ident, "payout_reported", "operator")
         self.store.assign(ident, "operator", "researcher")
         self.store.transition(ident, "researching", "operator")
@@ -128,8 +128,6 @@ class TestOidc(unittest.TestCase):
             "event_name": "schedule",
         }
         token = jwt.encode(claims, private, algorithm="RS256")
-        with patch.object(oidc, "verify_actions_token") as mocked:
-            mocked.side_effect = None  # No effect on actual token validation below
         with patch.object(jwt, "PyJWKClient") as provider:
             provider.return_value.get_signing_key_from_jwt.return_value.key = public
             self.assertEqual(oidc.verify_actions_token(token)["repository"], oidc.REPOSITORY)

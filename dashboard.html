@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Garcar Enterprise · Bounty Intelligence</title>
+<link rel="stylesheet" href="/dashboard.css">
+<script src="/dashboard.js" defer></script>
+</head><body>
+<a class="skip" href="#queue">Skip to candidates</a>
+<div class="app">
+<header class="top"><a class="brand" href="/"><span class="monogram">G</span><span>GARCAR<small>ENTERPRISE</small></span></a><span class="environment">STAGING / READ ONLY</span></header>
+<main>
+<section class="hero">
+<p class="eyebrow">PUBLIC SIGNALS. EXPLAINABLE DECISIONS.</p>
+<h1>Bounty <span>Intelligence</span></h1>
+<p class="intro">Discover public development opportunities, inspect the evidence, and qualify them before committing work. No wallets, trading, submissions, or fabricated earnings.</p>
+<div class="status-line"><span id="health" role="status" aria-live="polite">Checking sources…</span><span class="lock">EXTERNAL ACTIONS DISABLED</span></div>
+</section>
+<section class="metrics" aria-label="Current service state">
+<div class="metric"><small>CANDIDATES INDEXED</small><strong id="count">—</strong><p>Not verified paid bounties</p></div>
+<div class="metric"><small>SOURCE STATE</small><strong id="source">—</strong><p id="updated">Waiting for scan</p></div>
+<div class="metric"><small>HASH RECEIPTS</small><strong id="receipts">—</strong><p>Memory-only, not signed</p></div>
+<div class="metric"><small>ACTION GOVERNANCE</small><strong>LOCKED</strong><p>No automatic external actions</p></div>
+</section>
+<section class="panel" id="queue">
+<div class="panel-head"><div><p class="eyebrow">01 / REVIEW QUEUE</p><h2>Opportunities worth checking</h2><p>Review scores rank metadata relevance. They are not profit forecasts or testing permissions.</p></div><button id="refresh" type="button">Refresh display</button></div>
+<div class="filters">
+<label>Search<input id="search" type="search" placeholder="Title or repository"></label>
+<label>Technology<select id="skill"><option value="">All technologies</option><option value="python">Python</option><option value="typescript">TypeScript</option><option value="solidity">Solidity</option><option value="rust">Rust</option></select></label>
+<label>Priority<select id="minimum"><option value="0">All scores</option><option value="50">50+</option><option value="70">70+</option><option value="85">85+</option></select></label>
+</div><p class="queue-count" id="shown" aria-live="polite">Loading candidates…</p><div id="candidates" class="candidates"></div>
+</section>
+<div class="columns"><section class="panel"><p class="eyebrow">02 / APPROVAL GATES</p><h2>Human qualification required</h2>
+<ol><li>Verify the sponsor and payment or reward terms.</li><li>Check that the work is still open and accepts contributors.</li><li>Review eligibility, location, KYC and current rules.</li><li>For security testing, verify explicit written target scope.</li><li>Approve any external contribution or submission separately.</li></ol></section>
+<section class="panel"><p class="eyebrow">03 / EVIDENCE</p><h2>Observed, not assumed</h2><p id="errors">Source status pending.</p><p id="changes">Waiting for change history.</p>
+<nav><a href="/sources">Sources</a><a href="/receipts">Scan receipts</a><a href="/ready">Readiness</a></nav></section></div>
+</main><footer>GARCAR ENTERPRISE · REVIEW-ONLY CRYPTO BOUNTY DISCOVERY · REWARDS UNVERIFIED</footer>
+</div>
+</body></html>

@@ -7,3 +7,6 @@ venv/
 .env
 .env.local
 node_modules/
+artifacts/
+*.sqlite3
+*.db

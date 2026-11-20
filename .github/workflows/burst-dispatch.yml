@@ -36,6 +36,7 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_mesh_dispatch.py' -v
           python -m unittest discover -s tests -p 'test_host_capacity.py' -v
+          python -m unittest discover -s tests -p 'test_verify_receipt.py' -v
       - name: Read existing hosting state (fixed HTTPS health only)
         run: python hosting/burst_host_mesh.py --output artifacts/burst-host-health.json
       - name: Create immutable-input routing decision and unsigned receipt
@@ -43,6 +44,7 @@ jobs:
         run: |
           python hosting/mesh_dispatch.py --job "$REQUESTED_JOB" --observation artifacts/burst-host-health.json --output artifacts/dispatch-receipt.json
           python hosting/host_capacity.py --observation artifacts/burst-host-health.json --output artifacts/host-capacity.json
+          python hosting/verify_receipt.py --receipt artifacts/dispatch-receipt.json --observation artifacts/burst-host-health.json
           echo "decision=$(python -c 'import json; print(json.load(open("artifacts/dispatch-receipt.json"))["decision"])')" >> "$GITHUB_OUTPUT"
       - name: Execute bounded pinned-source review
         if: steps.route.outputs.decision == 'routed_read_only' && inputs.job == 'source_review'

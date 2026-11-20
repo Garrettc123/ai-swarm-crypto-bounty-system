@@ -17,11 +17,12 @@
     "zeus_invariant_tests::batch_classification_is_mutually_exclusive",
     "zeus_invariant_tests::everest_drop_reason_stays_distinguishable"
   ],
-  "requires_no_network_test_runtime": true,
   "actual_devnet_required_for_vulnerability_claim": true,
   "automatic_vulnerability_submission": false,
   "automatic_external_target_testing": false,
   "automatic_bounty_claims": false,
   "paid_host_provisioning": false,
-  "notes": "Runs exactly 3 unchanged original pinned Rust unit tests + 2 labeled ZEUS supplemental invariants in a credential-minimized ephemeral GitHub job; no production network, no devnet."
+  "notes": "Executes three pinned upstream Rust unit tests and two separate ZEUS checks on a credential-minimized, network-capable ephemeral GitHub runner; no deliberate target network calls, no devnet or claims.",
+  "runner_network_isolation_enforced": false,
+  "test_harness_uses_no_network_api": true
 }

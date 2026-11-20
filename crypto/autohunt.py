@@ -22,10 +22,19 @@ POLICY_PATH = ROOT / "crypto" / "autohunt_policy.json"
 MANIFEST_PATH = ROOT / "crypto" / "base_everest_target.json"
 HEX64 = re.compile(r"^[a-f0-9]{64}$")
 HEX40 = re.compile(r"^[a-f0-9]{40}$")
-EXPECTED_IDS = {
-    "EVEREST-PROOF-GATE", "EVEREST-AGGREGATE-ABI", "EVEREST-TX-GATE",
-    "EVEREST-BATCH-VALIDITY", "EVEREST-ROOT-VALIDATION",
+EXPECTED_QUESTIONS = {
+    "EVEREST-PROOF-GATE": ("crates/consensus/service/src/follow/proof_gate.rs",
+                           "b1c9af658d92830dbf9c7c3c22181d11e4dd885e"),
+    "EVEREST-AGGREGATE-ABI": ("crates/proof/contracts/src/aggregate_verifier.rs",
+                              "67b811a6ccdebe3b5fbd3dd328cad0047d6b32bd"),
+    "EVEREST-TX-GATE": ("crates/execution/base-tx-rpc/src/everest_gate.rs",
+                        "4c756cfc8ab549aaa48281c19b7c5e81408a6f53"),
+    "EVEREST-BATCH-VALIDITY": ("crates/consensus/protocol/src/batch/validity.rs",
+                               "dbc88782419cb9ee46ea29cfe2e18873352fd494"),
+    "EVEREST-ROOT-VALIDATION": ("crates/proof/challenge/src/validator.rs",
+                                "f0bfb9af00b4f77c5e2262acb74873f2c3dd4d99"),
 }
+EXPECTED_IDS = set(EXPECTED_QUESTIONS)
 NO_PROOF_FIELDS = {
     "proof_hash": None, "srr_hash": None, "seal_hash": None,
     "axiom_12_score": None,
@@ -82,8 +91,9 @@ def check_policy(policy: dict, manifest: dict) -> None:
             raise ValueError("Unexpected or duplicated research question")
         ids.add(id_)
         paths.add(path)
-        if not HEX40.fullmatch(str(row.get("git_blob", ""))):
-            raise ValueError("Unpinned research question")
+        if (not HEX40.fullmatch(str(row.get("git_blob", "")))
+                or (path, row["git_blob"]) != EXPECTED_QUESTIONS[id_]):
+            raise ValueError("Source path / immutable Git blob not approved for research question")
         if not isinstance(row.get("signals"), list) or not all(
             isinstance(s, str) and 0 < len(s) < 80 for s in row["signals"]
         ):
@@ -155,10 +165,22 @@ def verify_source_review(review: dict, policy: dict) -> dict[str, dict]:
     return mapped
 
 
-def discovery_summary(discovery: dict | None, policy: dict) -> dict:
+def discovery_summary(discovery: dict | None, policy: dict, at: datetime) -> dict:
     if discovery is None:
         return {"coverage": "unavailable", "listing_count": None, "errors": None,
                 "live_awards_verified": 0}
+    scanned_at = discovery.get("scanned_at")
+    if not isinstance(scanned_at, str):
+        raise ValueError("Public listing scan must provide a UTC timestamp")
+    try:
+        scanned = datetime.fromisoformat(scanned_at.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ValueError("Public listing scan timestamp invalid") from exc
+    if scanned.tzinfo is None:
+        raise ValueError("Public listing scan lacks a timezone")
+    age = at - scanned.astimezone(timezone.utc)
+    if age > timedelta(hours=24) or age < -timedelta(minutes=5):
+        raise ValueError("Public bounty discovery is stale or future-dated")
     # Existing hardened parser enforces exact export count, canonical origins, and duplicates.
     result = triage_public_listings(discovery)
     if result["discovered"] > policy["max_discovery_rows"]:
@@ -178,8 +200,8 @@ def compile_queue(policy: dict, manifest: dict, review: dict,
     validate_competition(manifest)
     check_policy(policy, manifest)
     by_path = verify_source_review(review, policy)
-    listings = discovery_summary(discovery, policy)
     now = (at or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    listings = discovery_summary(discovery, policy, now)
     start = datetime.fromisoformat(manifest["start_utc"].replace("Z", "+00:00"))
     end = datetime.fromisoformat(manifest["end_utc"].replace("Z", "+00:00"))
     window = "not_started" if now < start else "closed" if now >= end else "open"

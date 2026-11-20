@@ -26,8 +26,8 @@ def assess(profile: dict, thresholds: dict) -> dict:
     for observed, minimum in FIELDS.items():
         value = profile.get(observed)
         bound = thresholds.get(minimum)
-        ok = (type(value) in (int, float) and value >= bound
-              and type(bound) in (int, float) and bound > 0)
+        ok = (type(value) in (int, float) and type(bound) in (int, float)
+              and bound > 0 and value >= bound)
         checks[observed] = {
             "observed": value if type(value) in (int, float) else None,
             "operator_policy_minimum": bound,

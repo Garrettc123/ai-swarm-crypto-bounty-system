@@ -1,0 +1,60 @@
+{
+  "schema_version": 2,
+  "name": "Garcar Burst Host Mesh execution policy",
+  "default_deny": true,
+  "spend_limit_usd": 0,
+  "paid_provisioning_enabled": false,
+  "outbound_vulnerability_reports_enabled": false,
+  "allowed_jobs": {
+    "source_review": {
+      "lane": "github_actions_ephemeral",
+      "classification": "read_only",
+      "max_runtime_seconds": 240,
+      "requires_railway": false,
+      "requires_host": false
+    },
+    "staging_health": {
+      "lane": "github_actions_ephemeral",
+      "classification": "read_only",
+      "max_runtime_seconds": 40,
+      "requires_railway": true,
+      "requires_host": false
+    },
+    "devnet_preflight": {
+      "lane": "github_actions_ephemeral",
+      "classification": "read_only",
+      "max_runtime_seconds": 60,
+      "requires_railway": false,
+      "requires_host": false
+    },
+    "everest_devnet": {
+      "lane": "isolated_self_hosted_linux",
+      "classification": "local_devnet_only",
+      "max_runtime_seconds": 1800,
+      "requires_railway": false,
+      "requires_host": true,
+      "automatic_dispatch": false
+    }
+  },
+  "everest_candidate_capacity": {
+    "min_cpus": 8,
+    "min_memory_gib": 32,
+    "min_free_disk_gib": 80,
+    "description": "Conservative operator policy for candidate machines; not an official Immunefi specification. Actual resource needs require benchmarking."
+  },
+  "dedicated_runner_labels": [
+    "self-hosted",
+    "linux",
+    "x64",
+    "zeus-everest-isolated"
+  ],
+  "metadata_host": "https://garcar-crypto-bounty-discovery-canary-staging.up.railway.app/health",
+  "registration_note": "The full devnet requires an explicitly enrolled, isolated self-hosted runner. Public fork PR events must never target this runner.",
+  "forbidden": [
+    "public_network_exploitation",
+    "unapproved_charges",
+    "automated_bounty_submissions",
+    "publishing_private_findings",
+    "running_untrusted_pull_requests_on_private_runner"
+  ]
+}

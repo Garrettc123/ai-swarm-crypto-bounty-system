@@ -14,7 +14,7 @@ spec.loader.exec_module(zeus)
 class TestZeusResearch(unittest.TestCase):
     def test_git_blob_hash_is_correct(self):
         self.assertEqual(
-            "5d308e1e63a4a91e43dedc6c7b23aa791784fc60",
+            "ce013625030ba8dba906f756967f9e9ca394464a",
             zeus.blob_sha1(b"hello\n"),
         )
 

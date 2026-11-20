@@ -43,6 +43,24 @@ class TestBaseEverestIntake(unittest.TestCase):
         data['verification']['reward_verified_usd'] = 250000
         with self.assertRaises(ValueError): validate(data)
 
+    def test_rejects_missing_or_mismatched_official_pin(self):
+        data = copy.deepcopy(self.data)
+        data['targets_to_verify'] = [
+            target for target in data['targets_to_verify']
+            if target['upstream_repo'] != 'base/contracts'
+        ]
+        with self.assertRaises(ValueError): validate(data)
+        data = copy.deepcopy(self.data)
+        next(t for t in data['targets_to_verify']
+             if t['upstream_repo'] == 'base/contracts')['pinned_commit'] = '0'*40
+        with self.assertRaises(ValueError): validate(data)
+
+    def test_reth_is_not_blanket_scoped(self):
+        data = copy.deepcopy(self.data)
+        next(t for t in data['targets_to_verify']
+             if t['upstream_repo'] == 'base/reth')['scope_class'] = 'in_scope_execution'
+        with self.assertRaises(ValueError): validate(data)
+
     def test_generates_auditable_nonproof_snapshot(self):
         at = datetime(2026, 11, 20, 4, 23, tzinfo=timezone.utc)
         with TemporaryDirectory() as tmp:

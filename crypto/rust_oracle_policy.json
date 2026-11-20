@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "kind": "isolated_pinned_upstream_rust_tests",
+  "upstream": "immunefi-team/audit-comp-base-everest-base",
+  "commit": "689054ee14933cb2ee5bd54eadcd8dacbe1cc517",
+  "path": "crates/consensus/protocol/src/batch/validity.rs",
+  "git_blob_sha1": "dbc88782419cb9ee46ea29cfe2e18873352fd494",
+  "compile_timeout_seconds": 90,
+  "execute_timeout_seconds": 30,
+  "max_file_bytes": 1048576,
+  "official_upstream_test_names": [
+    "validity::tests::test_batch_validity",
+    "validity::tests::test_batch_drop_reason_display",
+    "validity::tests::test_batch_validity_display"
+  ],
+  "supplementary_test_names": [
+    "zeus_invariant_tests::batch_classification_is_mutually_exclusive",
+    "zeus_invariant_tests::everest_drop_reason_stays_distinguishable"
+  ],
+  "actual_devnet_required_for_vulnerability_claim": true,
+  "automatic_vulnerability_submission": false,
+  "automatic_external_target_testing": false,
+  "automatic_bounty_claims": false,
+  "paid_host_provisioning": false,
+  "notes": "Executes three pinned upstream Rust unit tests and two separate ZEUS checks on a credential-minimized, network-capable ephemeral GitHub runner; no deliberate target network calls, no devnet or claims.",
+  "runner_network_isolation_enforced": false,
+  "test_harness_uses_no_network_api": true
+}

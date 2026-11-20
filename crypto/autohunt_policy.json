@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "competition": "immunefi:audit-comp-base-everest",
+  "mode": "passive_authenticated_source_triage",
+  "pinned_repository": "immunefi-team/audit-comp-base-everest-base",
+  "pinned_commit": "689054ee14933cb2ee5bd54eadcd8dacbe1cc517",
+  "max_review_cards": 5,
+  "max_discovery_rows": 1000,
+  "allow_public_artifacts": true,
+  "automatic_target_scanning": false,
+  "automatic_exploit_execution": false,
+  "automatic_bounty_submission": false,
+  "new_paid_host_provisioning": false,
+  "manual_requirements": [
+    "fresh_scope_and_known_issues_review",
+    "eligibility_and_duplicate_check",
+    "authorized_local_test_environment",
+    "independent_runnable_poc",
+    "private_report_review"
+  ],
+  "research_questions": [
+    {
+      "id": "EVEREST-PROOF-GATE",
+      "path": "crates/consensus/service/src/follow/proof_gate.rs",
+      "git_blob": "b1c9af658d92830dbf9c7c3c22181d11e4dd885e",
+      "focus": "Proof-follow readiness and retry consistency",
+      "verification_question": "Check whether proof progression and retry boundaries remain consistent under supported local failure cases.",
+      "signals": [
+        "wait_til_ready",
+        "proofs_latest",
+        "max_blocks_ahead",
+        "refresh"
+      ],
+      "priority_base": 84
+    },
+    {
+      "id": "EVEREST-AGGREGATE-ABI",
+      "path": "crates/proof/contracts/src/aggregate_verifier.rs",
+      "git_blob": "67b811a6ccdebe3b5fbd3dd328cad0047d6b32bd",
+      "focus": "Aggregate verifier ABI and fork-dependent interval interpretation",
+      "verification_question": "Compare supported verifier versions and fork-dependent interval encoding in isolated component tests.",
+      "signals": [
+        "aggregate",
+        "challenge",
+        "nullify",
+        "interval"
+      ],
+      "priority_base": 82
+    },
+    {
+      "id": "EVEREST-TX-GATE",
+      "path": "crates/execution/base-tx-rpc/src/everest_gate.rs",
+      "git_blob": "4c756cfc8ab549aaa48281c19b7c5e81408a6f53",
+      "focus": "Historical fork-activation reads",
+      "verification_question": "Confirm historical versus pending/latest activation decisions in local unit tests.",
+      "signals": [
+        "timestamp",
+        "TxBase",
+        "resolve_timestamp",
+        "is_feature_active"
+      ],
+      "priority_base": 79
+    },
+    {
+      "id": "EVEREST-BATCH-VALIDITY",
+      "path": "crates/consensus/protocol/src/batch/validity.rs",
+      "git_blob": "dbc88782419cb9ee46ea29cfe2e18873352fd494",
+      "focus": "Batch validation rejection and transition conditions",
+      "verification_question": "Compare accepted and rejected batch transitions against published protocol invariants.",
+      "signals": [
+        "TxBasePreEverest",
+        "Timestamp",
+        "Invalid",
+        "Epoch"
+      ],
+      "priority_base": 78
+    },
+    {
+      "id": "EVEREST-ROOT-VALIDATION",
+      "path": "crates/proof/challenge/src/validator.rs",
+      "git_blob": "f0bfb9af00b4f77c5e2262acb74873f2c3dd4d99",
+      "focus": "Output-root and checkpoint validation contracts",
+      "verification_question": "Review component test coverage for root and checkpoint consistency failures.",
+      "signals": [
+        "verify_proof",
+        "output_root",
+        "checkpoint",
+        "header.*hash"
+      ],
+      "priority_base": 85
+    }
+  ]
+}

@@ -54,6 +54,13 @@ jobs:
           python crypto/bounty_hunter.py scan --db artifacts/bounties.sqlite3 --output artifacts/latest-bounties.json --limit 1000
           python crypto/bounty_hunter.py report --db artifacts/bounties.sqlite3 --output artifacts/earnings-report.json
           python crypto/bounty_triage.py --input artifacts/latest-bounties.json --output-dir artifacts/
+      - name: ZEUS AutoHunt (passive evidence-bound research queue)
+        run: |
+          python -m unittest discover -s tests -p 'test_autohunt.py' -v
+          python crypto/autohunt.py \
+            --source-review artifacts/base-everest-source-review.json \
+            --discovery artifacts/latest-bounties.json \
+            --output-dir artifacts/
       - name: Sync public discoveries to guarded staging queue
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         run: python crypto/push_queue_oidc.py --input artifacts/latest-bounties.json
@@ -72,6 +79,12 @@ jobs:
               f.write(f"## Public bounty discovery\n\nFound {result['discovered']} listed opportunities.\n\n")
               f.write(f"Source errors: {len(result['source_errors'])}.\n\n")
               f.write("No bounty tasks performed, no submissions sent, and no payouts credited.\n")
+              auto = 'artifacts/autohunt-queue.json'
+              if os.path.isfile(auto):
+                  with open(auto, encoding='utf-8') as src:
+                      queue = json.load(src)
+                  f.write(f"\\n## ZEUS AutoHunt\\n\\nResearch questions queued: {queue['review_questions_queued']} (not findings).\\n\\n")
+                  f.write(f"Competition window: {queue['competition_window']}. Verified findings/submissions/payout: 0/0/$0.\\n")
           PY
           fi
       - uses: actions/upload-artifact@v4

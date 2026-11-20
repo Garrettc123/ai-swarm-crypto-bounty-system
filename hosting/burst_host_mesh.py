@@ -27,8 +27,7 @@ class NoRedirect(HTTPRedirectHandler):
         return None
 
 
-def load_mesh(path: Path = MESH_PATH) -> dict:
-    doc = json.loads(path.read_text(encoding="utf-8"))
+def validate_mesh(doc: dict) -> dict:
     if doc.get("schema_version") != 1:
         raise ValueError("Unknown hosting mesh schema")
     lanes = doc.get("lanes")
@@ -53,6 +52,10 @@ def load_mesh(path: Path = MESH_PATH) -> dict:
         if allowed is not False:
             raise ValueError("Unsafe hosting policy: " + key)
     return doc
+
+
+def load_mesh(path: Path = MESH_PATH) -> dict:
+    return validate_mesh(json.loads(path.read_text(encoding="utf-8")))
 
 
 def _command_available(name: str) -> bool:

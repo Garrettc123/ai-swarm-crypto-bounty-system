@@ -1,0 +1,89 @@
+name: ZEUS Rust Oracle — pinned upstream unit tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "crypto/rust_oracle.py"
+      - "crypto/rust_oracle_policy.json"
+      - "crypto/autohunt.py"
+      - "crypto/autohunt_policy.json"
+      - "zeus.py"
+      - "tests/test_rust_oracle.py"
+      - ".github/workflows/rust-oracle.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "crypto/rust_oracle.py"
+      - "crypto/rust_oracle_policy.json"
+      - "crypto/autohunt.py"
+      - "crypto/autohunt_policy.json"
+      - "zeus.py"
+      - "tests/test_rust_oracle.py"
+      - ".github/workflows/rust-oracle.yml"
+  schedule:
+    - cron: "43 14 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zeus-rust-oracle-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  original-rust-tests:
+    # Never execute arbitrary fork PR code in the job that compiles external source.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check Rust compiler available on ephemeral runner
+        run: rustc --version
+      - name: Verify policy, pinned-source and output safety offline
+        run: python -m unittest discover -s tests -p 'test_rust_oracle.py' -v
+      - name: Authenticate exact competition source revision
+        run: |
+          python zeus.py run-once \
+            --intent "Base Everest bounty hunt organ" \
+            --estimated-value-usd 250000 \
+            --output artifacts/base-everest-source-review.json
+      - name: Compile original pinned Rust file and execute five narrow tests
+        run: |
+          python crypto/rust_oracle.py \
+            --source-review artifacts/base-everest-source-review.json \
+            --output artifacts/rust-oracle.json
+      - name: Create machine-readable provenance summary
+        if: always()
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          report = Path("artifacts/rust-oracle.json")
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
+              f.write("## ZEUS pinned Rust unit test oracle\n\n")
+              if not report.exists():
+                  f.write("No oracle receipt was produced; result unverified.\n")
+              else:
+                  d = json.loads(report.read_text(encoding="utf-8"))
+                  f.write(f"Execution status: {d.get('status', 'unverified')}\n\n")
+                  f.write(f"Original upstream tests passed: {d.get('official_upstream_tests_passed', 0)}\n\n")
+                  f.write(f"Supplemental ZEUS tests passed: {d.get('supplementary_tests_passed', 0)}\n\n")
+                  f.write("This is a narrow compile-and-test result, NOT a full Everest devnet, vulnerability, exploit, or payment proof.\n")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zeus-rust-oracle-${{ github.run_id }}
+          path: |
+            artifacts/rust-oracle.json
+            artifacts/base-everest-source-review.json
+          if-no-files-found: warn
+          retention-days: 14

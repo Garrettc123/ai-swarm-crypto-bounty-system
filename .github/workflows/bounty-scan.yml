@@ -34,6 +34,10 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_base_everest_intake.py' -v
           python crypto/base_everest_intake.py --output artifacts/base-everest-intake.json
+      - name: ZEUS pinned-source review (read-only, not a PoC)
+        run: |
+          python -m unittest discover -s tests -p 'test_zeus_research.py' -v
+          python zeus.py run-once --intent "Base Everest bounty hunt organ" --estimated-value-usd 250000 --output artifacts/base-everest-source-review.json
       - name: Query live public feeds over HTTPS
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -23,13 +23,36 @@
       "name": "base/base offchain components",
       "upstream_repo": "base/base",
       "pinned_commit": "689054ee14933cb2ee5bd54eadcd8dacbe1cc517",
-      "status": "manual_scope_review_required"
+      "status": "manual_scope_review_required",
+      "scope_class": "in_scope_offchain"
     },
     {
       "name": "base/reth declared execution-client dependency",
       "upstream_repo": "base/reth",
       "pinned_commit": "2b20e42de9c42b51ea0fb56599fda3c2f22640ef",
-      "status": "verify_exact_component_scope_before_testing"
+      "status": "verify_exact_component_scope_before_testing",
+      "scope_class": "declared_dependency_scope_limited"
+    },
+    {
+      "name": "base/contracts implementation contracts v8.5.0-rc.1",
+      "upstream_repo": "base/contracts",
+      "pinned_commit": "b9b76d97dca3c420098f597ebc65bee4f28001b7",
+      "status": "manual_scope_review_required",
+      "scope_class": "implementation_contracts"
+    },
+    {
+      "name": "base/contract-deployments Base Sepolia deployment and upgrade scripts",
+      "upstream_repo": "base/contract-deployments",
+      "pinned_commit": "e6797dfd6ac03b35d0ddd7eb369ab94bbc5fcd31",
+      "status": "manual_scope_review_required",
+      "scope_class": "in_scope_deployment_scripts"
+    },
+    {
+      "name": "base/nitro-validator TEE attestation contracts and in-repo libraries",
+      "upstream_repo": "base/nitro-validator",
+      "pinned_commit": "0ea0d12366b4fa44f9e07e4755f2ad36561cb674",
+      "status": "manual_scope_review_required",
+      "scope_class": "in_scope_tee_attestation"
     }
   ],
   "testing_environment": "designated_local_everest_devnet_only",

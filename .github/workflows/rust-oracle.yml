@@ -23,7 +23,9 @@ on:
       - "tests/test_rust_oracle.py"
       - ".github/workflows/rust-oracle.yml"
   schedule:
-    - cron: "43 14 * * *"
+    # Run only during the Nov 20-Dec 1 competition window, not indefinitely.
+    - cron: "43 14 20-30 11 *"
+    - cron: "43 10 1 12 *"
 
 permissions:
   contents: read

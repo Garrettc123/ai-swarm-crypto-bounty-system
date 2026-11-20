@@ -50,7 +50,9 @@ jobs:
       - name: Check Rust compiler available on ephemeral runner
         run: rustc --version
       - name: Verify policy, pinned-source and output safety offline
-        run: python -m unittest discover -s tests -p 'test_rust_oracle.py' -v
+        run: |
+          python -m unittest discover -s tests -p 'test_rust_oracle.py' -v
+          python -m unittest discover -s tests -p 'test_verify_rust_oracle.py' -v
       - name: Authenticate exact competition source revision
         run: |
           python zeus.py run-once \
@@ -62,6 +64,11 @@ jobs:
           python crypto/rust_oracle.py \
             --source-review artifacts/base-everest-source-review.json \
             --output artifacts/rust-oracle.json
+      - name: Independently reconcile Rust unit-test receipt with pinned source
+        run: |
+          python crypto/verify_rust_oracle.py \
+            --source-review artifacts/base-everest-source-review.json \
+            --receipt artifacts/rust-oracle.json
       - name: Create machine-readable provenance summary
         if: always()
         run: |

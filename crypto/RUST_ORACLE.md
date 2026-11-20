@@ -27,7 +27,7 @@ The runner checks the **exact five expected test names**, successful process exi
 
 [ZEUS Rust Oracle workflow](../.github/workflows/rust-oracle.yml) executes on an **ephemeral GitHub-hosted Ubuntu** runner, with `contents: read`, checkout credentials disabled and only a minimal environment forwarded into compilation and test execution. It performs no paid VM creation, wallet operations, report submissions or target network probes. The runner can reach the network; operating-system egress isolation is **not** established or claimed. A source fetch to exact pinned public GitHub files precedes the unit tests.
 
-The workflow runs at **14:43 UTC daily**, on relevant changes to main, or when manually dispatched. AutoHunt's main discovery scan remains separately scheduled at 14:17 UTC.
+The workflow runs at **14:43 UTC November 20–30**, and **10:43 UTC December 1** (during the 2026 competition window); it also supports relevant changes to main or manual dispatch. In later years the limited calendar cron may trigger a skipped run, but the code refuses testing outside the 2026 competition window. AutoHunt's public listing scanner continues daily at 14:17 UTC.
 
 Competition end: **2026-12-01 12:00 UTC**. The oracle refuses to execute source tests outside its competition window, and records a skip instead.
 

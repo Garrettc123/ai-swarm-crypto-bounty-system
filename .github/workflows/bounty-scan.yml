@@ -9,6 +9,10 @@ on:
   schedule:
     - cron: '17 14 * * *'
 
+concurrency:
+  group: bounty-scan-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions:
   contents: read
   id-token: write
@@ -38,6 +42,11 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_zeus_research.py' -v
           python zeus.py run-once --intent "Base Everest bounty hunt organ" --estimated-value-usd 250000 --output artifacts/base-everest-source-review.json
+      - name: Everest local-host preflight diagnostics (no devnet startup)
+        run: |
+          python -m unittest discover -s tests -p 'test_everest_host_preflight.py' -v
+          python scripts/everest_host_preflight.py --output artifacts/everest-host-preflight.json
+          bash -n scripts/everest_local_devnet.sh
       - name: Query live public feeds over HTTPS
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

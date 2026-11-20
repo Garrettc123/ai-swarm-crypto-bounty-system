@@ -1,0 +1,85 @@
+name: Garcar Burst Host Mesh — Scoped Dispatch
+
+on:
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "Approved read-only job; Everest devnet request records a blocked receipt"
+        required: true
+        default: source_review
+        type: choice
+        options:
+          - source_review
+          - staging_health
+          - devnet_preflight
+          - everest_devnet
+
+permissions:
+  contents: read
+
+concurrency:
+  group: garcar-scoped-dispatch
+  cancel-in-progress: false
+
+jobs:
+  plan-and-run-read-only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    env:
+      REQUESTED_JOB: ${{ inputs.job }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test dispatch and capacity controls
+        run: |
+          python -m unittest discover -s tests -p 'test_mesh_dispatch.py' -v
+          python -m unittest discover -s tests -p 'test_host_capacity.py' -v
+      - name: Read existing hosting state (fixed HTTPS health only)
+        run: python hosting/burst_host_mesh.py --output artifacts/burst-host-health.json
+      - name: Create immutable-input routing decision and unsigned receipt
+        id: route
+        run: |
+          python hosting/mesh_dispatch.py --job "$REQUESTED_JOB" --observation artifacts/burst-host-health.json --output artifacts/dispatch-receipt.json
+          python hosting/host_capacity.py --observation artifacts/burst-host-health.json --output artifacts/host-capacity.json
+          echo "decision=$(python -c 'import json; print(json.load(open("artifacts/dispatch-receipt.json"))["decision"])')" >> "$GITHUB_OUTPUT"
+      - name: Execute bounded pinned-source review
+        if: steps.route.outputs.decision == 'routed_read_only' && inputs.job == 'source_review'
+        run: |
+          python -m unittest discover -s tests -p 'test_zeus_research.py' -v
+          python zeus.py run-once --intent "Base Everest bounty hunt organ" --estimated-value-usd 250000 --output artifacts/base-everest-source-review.json
+      - name: Execute read-only host diagnostic
+        if: steps.route.outputs.decision == 'routed_read_only' && inputs.job == 'devnet_preflight'
+        run: python scripts/everest_host_preflight.py --output artifacts/everest-host-preflight.json
+      - name: Explain unapproved execution requests
+        if: steps.route.outputs.decision == 'blocked'
+        run: |
+          echo "Host mesh refused the requested job. See dispatch-receipt.json for reasons."
+          exit 3
+      - name: Evidence report
+        if: always()
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          r=Path('artifacts/dispatch-receipt.json')
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as f:
+              f.write('## Garcar Burst Host Mesh dispatch\n\n')
+              if r.exists():
+                  o=json.loads(r.read_text(encoding='utf-8'))
+                  f.write(f"Requested job: {o['requested_job']}\n\n")
+                  f.write(f"Decision: {o['decision']}\n\n")
+                  f.write(f"Planned lane: {o['planned_lane']}\n\n")
+                  f.write(f"Unsigned receipt digest: \`{o['receipt_sha256']}\`\n\n")
+                  f.write('No billable host was provisioned, no public target was tested, and no payout was credited.\n')
+              else:
+                  f.write('No dispatch receipt generated — job failed closed.\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: burst-host-dispatch-${{ github.run_id }}
+          path: artifacts/
+          if-no-files-found: warn
+          retention-days: 14

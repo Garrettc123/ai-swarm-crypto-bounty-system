@@ -18,6 +18,7 @@ from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "crypto"))
 import zeus
 from crypto.autohunt import (
     POLICY_PATH, MANIFEST_PATH, check_policy, load_json, verify_source_review,

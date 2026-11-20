@@ -1,0 +1,62 @@
+name: Garcar Burst Host Mesh — Verify GitHub + Railway
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'hosting/**'
+      - 'tests/test_burst_host_mesh.py'
+      - '.github/workflows/burst-host-mesh.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '29 11 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: garcar-burst-host-mesh
+  cancel-in-progress: false
+
+jobs:
+  verify-ephemeral-host:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate safe routing (offline tests)
+        run: python -m unittest discover -s tests -p 'test_burst_host_mesh.py' -v
+      - name: Probe ephemeral Linux and fixed Railway staging health
+        run: python hosting/burst_host_mesh.py --require-railway-health --output artifacts/burst-host-health.json
+      - name: Record attested outcome
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          path = Path('artifacts/burst-host-health.json')
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as f:
+              f.write('## Garcar Burst Host Mesh — verified capability\n\n')
+              if not path.exists():
+                  f.write('Readiness report missing — verification failed.\n')
+              else:
+                  state = json.loads(path.read_text(encoding='utf-8'))
+                  host = state['source_research']['runner']
+                  relay = state['railway_staging']
+                  f.write(f"Linux runner: {host['platform']}; CPUs: {host['cpu_count']}; RAM: {host['memory_gib']} GiB; free disk: {host['free_disk_gib']} GiB\n\n")
+                  f.write(f"Docker daemon reachable: {host['docker_daemon_accessible']}\n\n")
+                  f.write(f"Railway health: {relay['result']}\n\n")
+                  f.write('Everest devnet: **blocked** until dedicated-capacity evidence and authorized local startup.\n')
+                  f.write('No bounty PoC, vulnerability submission, cloud VM creation, or payout claimed.\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: burst-host-health-report
+          path: artifacts/burst-host-health.json
+          if-no-files-found: warn
+          retention-days: 14

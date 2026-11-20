@@ -21,7 +21,7 @@ The test harness compiles the immutable source **as a Rust module by reference**
 | Additional ZEUS-authored, labeled invariant checks | 2 |
 | Total expected and validated | 5 |
 
-The runner checks the **exact five expected test names**, successful process exit, and the Rust test summary. Every deviation blocks the job. It records SHA-256 digests for the original source, wrapper, compiled binary, stdout and the overall **unsigned** JSON metadata receipt, along with the compiler version.
+The runner checks the **exact five expected test names**, successful process exit, and the Rust test summary. A separate `crypto/verify_rust_oracle.py` reconciles the resulting JSON against the exact policy revision, authenticated source review, wrapper hash, expected test names and zero-claim safeguards. **This is unsigned receipt consistency, not an independent attestation that a third party witnessed execution.** Every deviation blocks the job. It records SHA-256 digests for the original source, wrapper, compiled binary, stdout and the overall **unsigned** JSON metadata receipt, along with the compiler version.
 
 ## Execution environment and safety
 
@@ -46,6 +46,10 @@ python3 zeus.py run-once \
 python3 crypto/rust_oracle.py \
   --source-review artifacts/base-everest-source-review.json \
   --output artifacts/rust-oracle.json
+
+python3 crypto/verify_rust_oracle.py \
+  --source-review artifacts/base-everest-source-review.json \
+  --receipt artifacts/rust-oracle.json
 ```
 
 `artifacts/rust-oracle.json` is an **evidence-backed execution receipt**, not a signature, proof hash, issue report or vulnerability.

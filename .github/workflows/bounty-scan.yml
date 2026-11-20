@@ -30,6 +30,10 @@ jobs:
           python -m unittest discover -s tests -p 'test_bounty_triage.py' -v
           python -m unittest discover -s tests -p 'test_bounty_push_queue_oidc.py' -v
           python -m unittest discover -s tests -p 'test_bounty_check_queue_status.py' -v
+      - name: Base Everest offline competition intake (no external target testing)
+        run: |
+          python -m unittest discover -s tests -p 'test_base_everest_intake.py' -v
+          python crypto/base_everest_intake.py --output artifacts/base-everest-intake.json
       - name: Query live public feeds over HTTPS
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

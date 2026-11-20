@@ -15,7 +15,16 @@ import re
 from typing import Any
 
 COMPETITION_PREFIX = 'https://immunefi.com/audit-competition/audit-comp-base-everest/'
-HEX_COMMIT = re.compile(r'^[a-f0-9]{40}
+HEX_COMMIT = re.compile(r'^[a-f0-9]{40}$')
+# Full immutable revisions from Immunefi's official Base Everest scope/resources.
+# base/reth is a limited declared dependency, not a blanket in-scope asset.
+BASELINE_PINS = {
+    'base/base': '689054ee14933cb2ee5bd54eadcd8dacbe1cc517',
+    'base/reth': '2b20e42de9c42b51ea0fb56599fda3c2f22640ef',
+    'base/contracts': 'b9b76d97dca3c420098f597ebc65bee4f28001b7',
+    'base/contract-deployments': 'e6797dfd6ac03b35d0ddd7eb369ab94bbc5fcd31',
+    'base/nitro-validator': '0ea0d12366b4fa44f9e07e4755f2ad36561cb674',
+}
 
 def parse_utc(value: str) -> datetime:
     if not isinstance(value, str) or not value.endswith('Z'):

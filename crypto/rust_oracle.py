@@ -158,7 +158,7 @@ def observed_run(review: dict, manifest: dict, autohunt_policy: dict, policy: di
     start = datetime.fromisoformat(manifest["start_utc"].replace("Z", "+00:00"))
     end = datetime.fromisoformat(manifest["end_utc"].replace("Z", "+00:00"))
     if not start <= instant < end:
-        return {
+        skipped = {
             "kind": "verified_upstream_rust_unit_test_oracle",
             "generated_at_utc": instant.isoformat(timespec="seconds"),
             "status": "skipped_outside_competition_window",
@@ -173,6 +173,8 @@ def observed_run(review: dict, manifest: dict, autohunt_policy: dict, policy: di
             "verified_earnings_usd": 0,
             "proof_hash": None,
         }
+        skipped["receipt_sha256"] = compact_digest(skipped)
+        return skipped
     source = fetcher(SRC)
     if not isinstance(source, bytes) or len(source) > policy["max_file_bytes"]:
         raise ValueError("Source invalid or oversized")

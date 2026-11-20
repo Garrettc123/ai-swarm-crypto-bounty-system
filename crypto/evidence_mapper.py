@@ -75,7 +75,15 @@ def index_rust(raw: bytes) -> dict:
             continue
         fn = {"name": found.group(1), "line": i + 1}
         declarations.append(fn)
-        if any(TEST_ATTR.match(prior) for prior in lines[max(0, i-5):i]):
+        attrs = []
+        for prior in reversed(lines[max(0, i-5):i]):
+            if prior.strip().startswith("#["):
+                attrs.append(prior)
+            elif prior.strip() == "":
+                continue
+            else:
+                break
+        if any(TEST_ATTR.match(attr) for attr in attrs):
             test_declarations.append(fn)
     return {
         "line_count": len(lines),

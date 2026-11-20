@@ -67,3 +67,15 @@ python3 -m unittest discover -s tests -p 'test_everest_host_preflight.py' -v
 ```
 
 The bug-bounty discovery pipeline runs its additional unit tests in GitHub Actions. Production deployment, full Everest component integration, and real payments remain separately gated.
+
+## Connected hosting: Garcar Burst Host Mesh (November 2026)
+
+The new [host mesh manifest](hosting/burst_host_mesh.json) and [validated Linux/Railway health probe](hosting/burst_host_mesh.py) connect two separate existing hosting lanes:
+
+- **GitHub Actions ephemeral Linux** executes time-bounded read-only source inspections, tests, and host-capacity probes. The [Burst Host Mesh workflow](.github/workflows/burst-host-mesh.yml) uses a restricted read-only token, an Ubuntu runner, and a 5-minute limit. It runs on relevant code pushes, by manual dispatch, and weekly. Standard public-repository GitHub-hosted runners are described as free under GitHub's current public-runner rules; deployment of additional paid compute is never implicit.
+- **Existing Railway staging** remains the persistent public metadata/status plane. Its fixed `/health` endpoint is checked over HTTPS using an allowlisted GET; no secrets, exploit details, submissions, or custom untrusted URLs are forwarded. The existing bounty scanner separately synchronizes public listing metadata through an authenticated, guarded OIDC ingestion flow.
+- **Everest full local devnet** remains an explicitly gated dedicated-Linux workload: the source-only GH runner does not certify official Production-config build capacity, and Railway's application container is not a host-level Docker daemon. No new DigitalOcean Droplet, cloud credit spend, or dedicated server has been provisioned.
+
+The first verified end-to-end [hosting-health run #44683132434](https://github.com/Garrettc123/ai-swarm-crypto-bounty-system/actions/runs/44683132434) passed **six offline policy tests**, confirmed GitHub runner Docker-daemon access and Railway's live `/health` identity, and uploaded a redacted capacity/health JSON artifact. This is an **infrastructure connection**, not evidence of a bounty vulnerability or full Everest devnet execution.
+
+Production-safety policy: no auto-provisioning, payment actions, production promotion, public exploit disclosure, or automated third-party testing. Development and proof generation require explicit review of current Immunefi scope and a separately verified host.

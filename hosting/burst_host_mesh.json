@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "architecture": "Garcar Burst Host Mesh",
+  "policy": "No new billable instance or production configuration change without explicit approval",
+  "connection_date_utc": "2026-11-20",
+  "lanes": {
+    "source_research": {
+      "host": "github_actions",
+      "status": "verified",
+      "runner": "ubuntu-24.04",
+      "persistent": false,
+      "execution_limit_minutes": 5,
+      "scope": "read_only_public_source"
+    },
+    "bounty_metadata": {
+      "host": "railway",
+      "status": "connected_existing",
+      "service": "garcar-crypto-bounty-discovery-canary",
+      "project_id": "a8fd2149-530e-4b72-8e4b-131526f9452d",
+      "environment_id": "9366cd82-91ab-42e7-8da9-8fc9cde07638",
+      "service_id": "0177efb1-ec70-44fb-b2f7-72f53af55652",
+      "health_url": "https://garcar-crypto-bounty-discovery-canary-staging.up.railway.app/health",
+      "integration": "existing GitHub Actions OIDC guarded queue",
+      "public_vulnerability_disclosures": false
+    },
+    "everest_devnet": {
+      "host": "dedicated_linux",
+      "status": "blocked_no_connected_host",
+      "auto_provision": false,
+      "auto_start": false,
+      "network_mode": "local_only",
+      "vulnerability_submissions": false,
+      "requires": [
+        "verified_linux_host",
+        "official_pinned_checkout",
+        "sufficient_disk_memory_cpu",
+        "working_docker_daemon",
+        "just_installed",
+        "current_competition_scope_and_exclusions",
+        "explicit_devnet_start_authorization"
+      ]
+    }
+  },
+  "security": {
+    "automatic_customer_outreach": false,
+    "automatic_vulnerability_submissions": false,
+    "automatic_payout_claims": false,
+    "provision_billable_resources": false,
+    "proof_hash_from_static_code": false
+  },
+  "last_verified_workflows": {
+    "bounty_scan": "https://github.com/Garrettc123/ai-swarm-crypto-bounty-system/actions/runs/44677653847",
+    "zeus_source_review": "https://github.com/Garrettc123/ai-swarm-crypto-bounty-system/actions/runs/44675836979"
+  }
+}

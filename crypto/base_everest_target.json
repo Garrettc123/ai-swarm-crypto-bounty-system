@@ -13,8 +13,10 @@
     "name": "base-everest-hunter",
     "source_repo": "Garrettc123/zeus-dashboard",
     "source_path": "organs/base-everest-hunter-organ.yaml",
-    "source_commit": "21caa4f574ea05a214da903d9bcfad158a93cd99",
-    "tracking_issue": "https://github.com/Garrettc123/zeus-dashboard/issues/5"
+    "source_commit": "6773c82fb53b51917af15df2c9077999eb07a23b",
+    "tracking_issue": "https://github.com/Garrettc123/zeus-dashboard/issues/5",
+    "source_review_run": "https://github.com/Garrettc123/ai-swarm-crypto-bounty-system/actions/runs/44675836979",
+    "source_evidence_sha256": "bd29c026aeb9701a4a71db0026158bafe09a2aef77ca5d02ea5926f4113cc2fe"
   },
   "targets_to_verify": [
     {

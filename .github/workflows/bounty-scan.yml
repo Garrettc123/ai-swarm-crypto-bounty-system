@@ -61,6 +61,13 @@ jobs:
             --source-review artifacts/base-everest-source-review.json \
             --discovery artifacts/latest-bounties.json \
             --output-dir artifacts/
+      - name: ZEUS authenticated Rust evidence map (no Rust execution)
+        run: |
+          python -m unittest discover -s tests -p 'test_evidence_mapper.py' -v
+          python crypto/evidence_mapper.py \
+            --source-review artifacts/base-everest-source-review.json \
+            --autohunt-queue artifacts/autohunt-queue.json \
+            --output-dir artifacts/
       - name: Sync public discoveries to guarded staging queue
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         run: python crypto/push_queue_oidc.py --input artifacts/latest-bounties.json
@@ -79,6 +86,12 @@ jobs:
               f.write(f"## Public bounty discovery\n\nFound {result['discovered']} listed opportunities.\n\n")
               f.write(f"Source errors: {len(result['source_errors'])}.\n\n")
               f.write("No bounty tasks performed, no submissions sent, and no payouts credited.\n")
+              mapper = 'artifacts/evidence-map.json'
+              if os.path.isfile(mapper):
+                  with open(mapper, encoding='utf-8') as src:
+                      evidence = json.load(src)
+                  f.write(f"\\nZEUS evidence map: {evidence['source_files_verified']} pinned source files and {evidence['related_test_references_verified']} related test references.\\n")
+                  f.write("Rust tests, local devnet and PoCs executed: none.\\n")
               auto = 'artifacts/autohunt-queue.json'
               if os.path.isfile(auto):
                   with open(auto, encoding='utf-8') as src:

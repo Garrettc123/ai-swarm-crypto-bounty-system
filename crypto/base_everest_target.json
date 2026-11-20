@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "id": "immunefi:audit-comp-base-everest",
+  "name": "Base Everest Audit Competition",
+  "kind": "audit_competition",
+  "start_utc": "2026-11-19T17:00:00Z",
+  "end_utc": "2026-12-01T12:00:00Z",
+  "advertised_total_pool_usd": 250000,
+  "official_information_url": "https://immunefi.com/audit-competition/audit-comp-base-everest/information/",
+  "official_scope_url": "https://immunefi.com/audit-competition/audit-comp-base-everest/scope/",
+  "official_resources_url": "https://immunefi.com/audit-competition/audit-comp-base-everest/resources/",
+  "organ": {
+    "name": "base-everest-hunter",
+    "source_repo": "Garrettc123/zeus-dashboard",
+    "source_path": "organs/base-everest-hunter-organ.yaml",
+    "source_commit": "21caa4f574ea05a214da903d9bcfad158a93cd99",
+    "tracking_issue": "https://github.com/Garrettc123/zeus-dashboard/issues/5"
+  },
+  "targets_to_verify": [
+    {
+      "name": "base/base offchain components",
+      "upstream_repo": "base/base",
+      "pinned_commit": "689054ee14933cb2ee5bd54eadcd8dacbe1cc517",
+      "status": "manual_scope_review_required"
+    },
+    {
+      "name": "base/reth declared execution-client dependency",
+      "upstream_repo": "base/reth",
+      "pinned_commit": "2b20e42de9c42b51ea0fb56599fda3c2f22640ef",
+      "status": "verify_exact_component_scope_before_testing"
+    }
+  ],
+  "testing_environment": "designated_local_everest_devnet_only",
+  "runnable_poc_required": true,
+  "kyc_required_for_payout": true,
+  "verification": {
+    "host_runtime_verified": false,
+    "zeus_run_once_verified": false,
+    "local_devnet_verified": false,
+    "finding_verified": false,
+    "proof_hash": null,
+    "srr_hash": null,
+    "seal_hash": null,
+    "axiom_12_score": null,
+    "reward_verified_usd": 0
+  }
+}

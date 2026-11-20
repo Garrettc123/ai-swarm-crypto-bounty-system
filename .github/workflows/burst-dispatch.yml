@@ -71,7 +71,7 @@ jobs:
                   f.write(f"Requested job: {o['requested_job']}\n\n")
                   f.write(f"Decision: {o['decision']}\n\n")
                   f.write(f"Planned lane: {o['planned_lane']}\n\n")
-                  f.write(f"Unsigned receipt digest: \`{o['receipt_sha256']}\`\n\n")
+                  f.write(f"Unsigned receipt digest: `{o['receipt_sha256']}`\n\n")
                   f.write('No billable host was provisioned, no public target was tested, and no payout was credited.\n')
               else:
                   f.write('No dispatch receipt generated — job failed closed.\n')

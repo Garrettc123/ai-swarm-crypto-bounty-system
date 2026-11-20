@@ -164,6 +164,7 @@ def report(mesh: dict, profile: dict, railway: dict, now: datetime | None = None
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--output", default="artifacts/burst-host-health.json")
+    p.add_argument("--require-railway-health", action="store_true")
     args = p.parse_args()
     try:
         mesh = load_mesh()
@@ -181,6 +182,9 @@ def main() -> int:
         "everest_devnet": doc["routing"]["everest_devnet"],
         "output": str(dest),
     }, indent=2))
+    if args.require_railway_health and doc["railway_staging"]["result"] != "connected_health_verified":
+        print("Railway health not verified; refusing to declare a live connection")
+        return 3
     return 0
 
 

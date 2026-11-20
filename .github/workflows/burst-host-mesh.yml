@@ -31,6 +31,16 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_burst_host_mesh.py' -v
       - name: Probe ephemeral Linux and fixed Railway staging health
         run: python hosting/burst_host_mesh.py --require-railway-health --output artifacts/burst-host-health.json
+      - name: Validate host router and capacity policy (offline)
+        run: |
+          python -m unittest discover -s tests -p 'test_mesh_dispatch.py' -v
+          python -m unittest discover -s tests -p 'test_host_capacity.py' -v
+          python -m unittest discover -s tests -p 'test_verify_receipt.py' -v
+      - name: Plan bounded source review and host capacity
+        run: |
+          python hosting/mesh_dispatch.py --job source_review --observation artifacts/burst-host-health.json --output artifacts/dispatch-receipt.json
+          python hosting/host_capacity.py --observation artifacts/burst-host-health.json --output artifacts/host-capacity.json
+          python hosting/verify_receipt.py --receipt artifacts/dispatch-receipt.json --observation artifacts/burst-host-health.json
       - name: Record attested outcome
         if: always()
         run: |
@@ -57,6 +67,9 @@ jobs:
         if: always()
         with:
           name: burst-host-health-report
-          path: artifacts/burst-host-health.json
+          path: |
+            artifacts/burst-host-health.json
+            artifacts/dispatch-receipt.json
+            artifacts/host-capacity.json
           if-no-files-found: warn
           retention-days: 14

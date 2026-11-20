@@ -144,6 +144,18 @@ class TestZEUSAutoHunt(unittest.TestCase):
         with self.assertRaises(ValueError):
             compile_queue(self.policy, self.manifest, self.source, partial, at=NOW)
 
+    def test_stale_public_listing_scan_rejected(self):
+        old = public_discovery()
+        old["scanned_at"] = "2026-11-17T12:00:00Z"
+        with self.assertRaises(ValueError):
+            compile_queue(self.policy, self.manifest, self.source, old, at=NOW)
+
+    def test_unknown_research_path_rejected(self):
+        policy = copy.deepcopy(self.policy)
+        policy["research_questions"][0]["path"] = "crates/random/attacker.rs"
+        with self.assertRaises(ValueError):
+            compile_queue(policy, self.manifest, self.source, None, at=NOW)
+
     def test_closed_contest_disables_review_queue(self):
         result = compile_queue(self.policy, self.manifest, self.source, None,
                                at=datetime(2026, 12, 1, 12, tzinfo=timezone.utc))
